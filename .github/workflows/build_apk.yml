@@ -24,7 +24,7 @@ jobs:
 
       - name: Fix gradlew line endings and permissions
         run: |
-          sed -i 's/\r$//' gradlew
+          sed -i "s/\r$//" gradlew
           chmod +x gradlew
         shell: bash
 

@@ -1,0 +1,50 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    
+    <!-- Outer accent circle/badge -->
+    <path
+        android:pathData="M54,24 A30,30 0 1,1 53.99,24 Z"
+        android:strokeColor="#33FF9800"
+        android:strokeWidth="2" />
+
+    <!-- Building block structures -->
+    <path
+        android:pathData="M30,76 L30,46 L46,46 L46,76 Z"
+        android:fillColor="#FF9800" />
+    <path
+        android:pathData="M48,76 L48,34 L64,34 L64,76 Z"
+        android:fillColor="#FFA726" />
+    <path
+        android:pathData="M66,76 L66,52 L78,52 L78,76 Z"
+        android:fillColor="#FFB74D" />
+
+    <!-- Building block windows / division lines -->
+    <path
+        android:pathData="M34,50h8 M34,56h8 M34,62h8 M34,68h8
+                         M52,38h8 M52,44h8 M52,50h8 M52,56h8 M52,62h8 M52,68h8
+                         M70,56h4 M70,62h4 M70,68h4"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.5" />
+
+    <!-- Crane arm at top -->
+    <path
+        android:pathData="M42,28 L78,28 M64,28 L64,34 M72,28 L72,38"
+        android:strokeColor="#FFCC80"
+        android:strokeWidth="2" />
+
+    <!-- Construction Helmet badge in front -->
+    <path
+        android:pathData="M54,58 C47,58 44,63 44,67 L64,67 C64,63 61,58 54,58 Z"
+        android:fillColor="#FF5722" />
+    <path
+        android:pathData="M42,67 L66,67 L66,69 L42,69 Z"
+        android:fillColor="#E64A19" />
+    <path
+        android:pathData="M52,58 L52,63 M56,58 L56,63"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1" />
+</vector>

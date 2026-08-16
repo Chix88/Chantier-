@@ -1,0 +1,6 @@
+{
+  "name": "Gestion Chantier",
+  "description": "Application de gestion opérationnelle de chantier : organisation des blocs, affectation des chefs d'équipe et ouvriers par tâche, et génération automatique de rapports journaliers.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -41,6 +41,7 @@ class ChantierRepository(private val dao: ChantierDao) {
                 val chef = chefMap[alloc.chefId]
                 val bloc = blocMap[alloc.blocId]
                 val task = taskMap[alloc.taskId]
+                val linkedTask = alloc.linkedTaskId?.let { taskMap[it] }
 
                 if (chef != null && bloc != null && task != null) {
                     AllocationDetail(
@@ -60,7 +61,11 @@ class ChantierRepository(private val dao: ChantierDao) {
                         taskStatus = task.status,
                         taskPriority = task.priority,
                         workersCount = alloc.workersCount,
-                        note = alloc.note
+                        note = alloc.note,
+                        customRendement = alloc.customRendement,
+                        isSecondaryTask = alloc.isSecondaryTask,
+                        linkedTaskId = alloc.linkedTaskId,
+                        linkedTaskTitle = linkedTask?.title
                     )
                 } else null
             }
@@ -78,11 +83,47 @@ class ChantierRepository(private val dao: ChantierDao) {
     suspend fun deleteChef(chef: TeamLeader) = dao.deleteTeamLeader(chef)
 
     // CRUD for Task
-    suspend fun insertTask(task: TaskItem): Long = dao.insertTask(task)
-    suspend fun updateTask(task: TaskItem) = dao.updateTask(task)
+    suspend fun insertTask(task: TaskItem): Long {
+        val maxOrder = dao.getMaxOrderIndexForBloc(task.blocId) ?: 0
+        val finalTask = if (task.orderIndex <= 0) task.copy(orderIndex = maxOrder + 1) else task
+        val id = dao.insertTask(finalTask)
+        recalculateTaskProgress(id)
+        return id
+    }
+
+    suspend fun updateTask(task: TaskItem) {
+        dao.updateTask(task)
+        recalculateTaskProgress(task.id)
+    }
+
     suspend fun deleteTask(task: TaskItem) = dao.deleteTask(task)
+
     suspend fun updateTaskProgress(taskId: Long, status: String, percent: Int) =
         dao.updateTaskProgress(taskId, status, percent)
+
+    suspend fun moveTaskUp(task: TaskItem) {
+        val blocTasks = dao.getTasksListForBloc(task.blocId)
+        val index = blocTasks.indexOfFirst { it.id == task.id }
+        if (index > 0) {
+            val prev = blocTasks[index - 1]
+            val prevOrder = if (prev.orderIndex == task.orderIndex) index - 1 else prev.orderIndex
+            val currOrder = if (prev.orderIndex == task.orderIndex) index else task.orderIndex
+            dao.updateTask(prev.copy(orderIndex = currOrder))
+            dao.updateTask(task.copy(orderIndex = prevOrder))
+        }
+    }
+
+    suspend fun moveTaskDown(task: TaskItem) {
+        val blocTasks = dao.getTasksListForBloc(task.blocId)
+        val index = blocTasks.indexOfFirst { it.id == task.id }
+        if (index >= 0 && index < blocTasks.size - 1) {
+            val next = blocTasks[index + 1]
+            val nextOrder = if (next.orderIndex == task.orderIndex) index + 1 else next.orderIndex
+            val currOrder = if (next.orderIndex == task.orderIndex) index else task.orderIndex
+            dao.updateTask(next.copy(orderIndex = currOrder))
+            dao.updateTask(task.copy(orderIndex = nextOrder))
+        }
+    }
 
     // Allocation updates
     suspend fun setWorkerAllocation(
@@ -91,7 +132,8 @@ class ChantierRepository(private val dao: ChantierDao) {
         blocId: Long,
         taskId: Long,
         workersCount: Int,
-        note: String = ""
+        note: String = "",
+        customRendement: Double = 0.0
     ) {
         if (workersCount <= 0) {
             dao.deleteAllocationByChefAndTask(date, chefId, taskId)
@@ -102,13 +144,91 @@ class ChantierRepository(private val dao: ChantierDao) {
                 blocId = blocId,
                 taskId = taskId,
                 workersCount = workersCount,
-                note = note
+                note = note,
+                customRendement = customRendement,
+                isSecondaryTask = false
             )
             dao.insertOrUpdateAllocation(allocation)
         }
+        recalculateTaskProgress(taskId)
     }
 
-    suspend fun deleteAllocation(allocationId: Long) = dao.deleteAllocation(allocationId)
+    suspend fun setDualWorkerAllocation(
+        date: String,
+        chefId: Long,
+        blocId1: Long,
+        taskId1: Long,
+        rendement1: Double,
+        blocId2: Long,
+        taskId2: Long,
+        rendement2: Double,
+        workersCount: Int,
+        note: String = ""
+    ) {
+        if (workersCount <= 0) return
+        val task1 = dao.getTaskById(taskId1)
+        val task2 = dao.getTaskById(taskId2)
+
+        val note1 = if (note.isNotBlank()) "$note (Combiné avec ${task2?.title ?: "Tâche"})" else "Combiné avec ${task2?.title ?: "Tâche"}"
+        val note2 = if (note.isNotBlank()) "$note (Combiné avec ${task1?.title ?: "Tâche"})" else "Combiné avec ${task1?.title ?: "Tâche"}"
+
+        val alloc1 = TaskAllocation(
+            date = date,
+            chefId = chefId,
+            blocId = blocId1,
+            taskId = taskId1,
+            workersCount = workersCount,
+            note = note1,
+            customRendement = rendement1,
+            isSecondaryTask = false,
+            linkedTaskId = taskId2
+        )
+        val alloc2 = TaskAllocation(
+            date = date,
+            chefId = chefId,
+            blocId = blocId2,
+            taskId = taskId2,
+            workersCount = workersCount,
+            note = note2,
+            customRendement = rendement2,
+            isSecondaryTask = true, // Secondary so chef capacity doesn't double count the same workers
+            linkedTaskId = taskId1
+        )
+        dao.insertOrUpdateAllocation(alloc1)
+        dao.insertOrUpdateAllocation(alloc2)
+        recalculateTaskProgress(taskId1)
+        recalculateTaskProgress(taskId2)
+    }
+
+    suspend fun deleteAllocation(allocationId: Long) {
+        val alloc = dao.getAllocationById(allocationId)
+        if (alloc != null) {
+            dao.deleteAllocation(allocationId)
+            recalculateTaskProgress(alloc.taskId)
+        }
+    }
+
+    private suspend fun recalculateTaskProgress(taskId: Long) {
+        val task = dao.getTaskById(taskId) ?: return
+        val allocations = dao.getAllocationsListForTask(taskId)
+        
+        if (task.workQuantity > 0) {
+            var completedWork = 0.0
+            allocations.forEach { alloc ->
+                val effRendement = if (alloc.customRendement > 0.0) alloc.customRendement else task.rendement
+                completedWork += alloc.workersCount * effRendement
+            }
+            val percent = if (task.workQuantity > 0) ((completedWork / task.workQuantity) * 100).toInt().coerceIn(0, 100) else 0
+            val status = if (percent >= 100) "Terminé" else if (percent > 0) "En cours" else "À faire"
+            
+            val updatedTask = task.copy(
+                completedQuantity = completedWork,
+                completionPercent = percent,
+                status = status
+            )
+            dao.updateTask(updatedTask)
+        }
+    }
 
     // Daily reports
     suspend fun getDailyReport(date: String): DailyReport? = dao.getDailyReport(date)
@@ -187,6 +307,11 @@ class ChantierRepository(private val dao: ChantierDao) {
                     category = "Gros Œuvre",
                     status = "En cours",
                     priority = "Haute",
+                    workQuantity = 120.0,
+                    completedQuantity = 72.0,
+                    workUnit = "m²",
+                    rendement = 15.0,
+                    orderIndex = 1,
                     completionPercent = 60,
                     description = "Pose des banches métalliques et serrage"
                 )
@@ -198,6 +323,11 @@ class ChantierRepository(private val dao: ChantierDao) {
                     category = "Ferraillage",
                     status = "En cours",
                     priority = "Haute",
+                    workQuantity = 8.5,
+                    completedQuantity = 3.8,
+                    workUnit = "T",
+                    rendement = 0.8,
+                    orderIndex = 2,
                     completionPercent = 45,
                     description = "Positionnement des treillis et calage"
                 )
@@ -209,6 +339,11 @@ class ChantierRepository(private val dao: ChantierDao) {
                     category = "Béton",
                     status = "En cours",
                     priority = "Urgente",
+                    workQuantity = 45.0,
+                    completedQuantity = 13.5,
+                    workUnit = "m³",
+                    rendement = 5.0,
+                    orderIndex = 3,
                     completionPercent = 30,
                     description = "Coulage dalle haute RDC avec pompe"
                 )
@@ -220,6 +355,11 @@ class ChantierRepository(private val dao: ChantierDao) {
                     category = "Finitions",
                     status = "À faire",
                     priority = "Moyenne",
+                    workQuantity = 120.0,
+                    completedQuantity = 12.0,
+                    workUnit = "m²",
+                    rendement = 25.0,
+                    orderIndex = 4,
                     completionPercent = 10,
                     description = "Nettoyage banches et traitement de surface"
                 )
@@ -233,6 +373,11 @@ class ChantierRepository(private val dao: ChantierDao) {
                     category = "Ferraillage",
                     status = "En cours",
                     priority = "Haute",
+                    workQuantity = 15.0,
+                    completedQuantity = 10.5,
+                    workUnit = "T",
+                    rendement = 0.9,
+                    orderIndex = 1,
                     completionPercent = 70,
                     description = "Pose aciers HA20 et écarteurs"
                 )
@@ -244,6 +389,11 @@ class ChantierRepository(private val dao: ChantierDao) {
                     category = "Béton",
                     status = "En cours",
                     priority = "Urgente",
+                    workQuantity = 80.0,
+                    completedQuantity = 40.0,
+                    workUnit = "m³",
+                    rendement = 6.0,
+                    orderIndex = 2,
                     completionPercent = 50,
                     description = "Rotation 4 toupies de béton C30/37"
                 )
@@ -255,6 +405,11 @@ class ChantierRepository(private val dao: ChantierDao) {
                     category = "Gros Œuvre",
                     status = "En cours",
                     priority = "Moyenne",
+                    workQuantity = 250.0,
+                    completedQuantity = 62.5,
+                    workUnit = "m²",
+                    rendement = 30.0,
+                    orderIndex = 3,
                     completionPercent = 25,
                     description = "Application bicouche bitumineux"
                 )
@@ -268,6 +423,11 @@ class ChantierRepository(private val dao: ChantierDao) {
                     category = "Maçonnerie",
                     status = "En cours",
                     priority = "Moyenne",
+                    workQuantity = 180.0,
+                    completedQuantity = 72.0,
+                    workUnit = "m²",
+                    rendement = 12.0,
+                    orderIndex = 1,
                     completionPercent = 40,
                     description = "Pose briques alvéolaires avec mortier isolant"
                 )
@@ -279,6 +439,11 @@ class ChantierRepository(private val dao: ChantierDao) {
                     category = "Maçonnerie",
                     status = "À faire",
                     priority = "Moyenne",
+                    workQuantity = 24.0,
+                    completedQuantity = 3.6,
+                    workUnit = "Unités",
+                    rendement = 2.0,
+                    orderIndex = 2,
                     completionPercent = 15,
                     description = "Vérification niveaux laser"
                 )

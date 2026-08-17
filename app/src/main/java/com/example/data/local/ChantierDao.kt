@@ -55,11 +55,17 @@ interface ChantierDao {
     suspend fun getTeamLeaderCount(): Int
 
     // --- TASKS ---
-    @Query("SELECT * FROM tasks ORDER BY blocId ASC, priority DESC, id ASC")
+    @Query("SELECT * FROM tasks ORDER BY blocId ASC, orderIndex ASC, id ASC")
     fun getAllTasks(): Flow<List<TaskItem>>
 
-    @Query("SELECT * FROM tasks WHERE blocId = :blocId ORDER BY id ASC")
+    @Query("SELECT * FROM tasks WHERE blocId = :blocId ORDER BY orderIndex ASC, id ASC")
     fun getTasksForBloc(blocId: Long): Flow<List<TaskItem>>
+
+    @Query("SELECT * FROM tasks WHERE blocId = :blocId ORDER BY orderIndex ASC, id ASC")
+    suspend fun getTasksListForBloc(blocId: Long): List<TaskItem>
+
+    @Query("SELECT MAX(orderIndex) FROM tasks WHERE blocId = :blocId")
+    suspend fun getMaxOrderIndexForBloc(blocId: Long): Int?
 
     @Query("SELECT * FROM tasks WHERE id = :id")
     suspend fun getTaskById(id: Long): TaskItem?
@@ -80,6 +86,12 @@ interface ChantierDao {
     @Query("SELECT * FROM task_allocations WHERE date = :date")
     fun getAllocationsForDate(date: String): Flow<List<TaskAllocation>>
 
+    @Query("SELECT * FROM task_allocations WHERE taskId = :taskId")
+    fun getAllocationsForTask(taskId: Long): Flow<List<TaskAllocation>>
+
+    @Query("SELECT * FROM task_allocations WHERE taskId = :taskId")
+    suspend fun getAllocationsListForTask(taskId: Long): List<TaskAllocation>
+
     @Query("SELECT * FROM task_allocations WHERE date = :date AND chefId = :chefId")
     fun getAllocationsForChefAndDate(date: String, chefId: Long): Flow<List<TaskAllocation>>
 
@@ -89,11 +101,17 @@ interface ChantierDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertOrUpdateAllocation(allocation: TaskAllocation): Long
 
+    @Query("SELECT * FROM task_allocations WHERE id = :allocationId")
+    suspend fun getAllocationById(allocationId: Long): TaskAllocation?
+
     @Query("DELETE FROM task_allocations WHERE id = :allocationId")
     suspend fun deleteAllocation(allocationId: Long)
 
     @Query("DELETE FROM task_allocations WHERE date = :date AND chefId = :chefId AND taskId = :taskId")
     suspend fun deleteAllocationByChefAndTask(date: String, chefId: Long, taskId: Long)
+
+    @Query("SELECT SUM(workersCount) FROM task_allocations WHERE taskId = :taskId")
+    suspend fun getTotalWorkersForTask(taskId: Long): Int?
 
     // --- DAILY REPORTS ---
     @Query("SELECT * FROM daily_reports ORDER BY date DESC")

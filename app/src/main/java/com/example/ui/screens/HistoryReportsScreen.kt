@@ -74,7 +74,7 @@ fun HistoryReportsScreen(
                 .padding(bottom = 80.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            item {
+            item(key = "history_header") {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.padding(vertical = 8.dp)
@@ -99,7 +99,7 @@ fun HistoryReportsScreen(
             }
 
             if (reports.isEmpty()) {
-                item {
+                item(key = "empty_reports") {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
@@ -132,7 +132,7 @@ fun HistoryReportsScreen(
                     }
                 }
             } else {
-                items(reports) { report ->
+                items(reports, key = { it.date }) { report ->
                     ElevatedCard(
                         modifier = Modifier
                             .fillMaxWidth()

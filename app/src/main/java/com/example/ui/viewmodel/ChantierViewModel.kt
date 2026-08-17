@@ -81,7 +81,7 @@ class ChantierViewModel(application: Application) : AndroidViewModel(application
     ) { chefs, allocations ->
         chefs.map { chef ->
             val chefAllocs = allocations.filter { it.chefId == chef.id }
-            val totalAssigned = chefAllocs.sumOf { it.workersCount }
+            val totalAssigned = chefAllocs.filter { !it.isSecondaryTask }.sumOf { it.workersCount }
             ChefWithAllocations(
                 chef = chef,
                 allocatedWorkers = totalAssigned,
@@ -100,7 +100,7 @@ class ChantierViewModel(application: Application) : AndroidViewModel(application
         blocs.map { bloc ->
             val blocTasks = tasks.filter { it.blocId == bloc.id }
             val blocAllocs = allocations.filter { it.blocId == bloc.id }
-            val totalWorkers = blocAllocs.sumOf { it.workersCount }
+            val totalWorkers = blocAllocs.filter { !it.isSecondaryTask }.sumOf { it.workersCount }
             val chefs = blocAllocs.map { it.chefName }.distinct()
             BlocWorkerSummary(
                 blocId = bloc.id,
@@ -131,7 +131,7 @@ class ChantierViewModel(application: Application) : AndroidViewModel(application
 
     // Global Stats for the date
     val totalWorkersMobilized: StateFlow<Int> = currentAllocations.combine(allChefs) { allocations, _ ->
-        allocations.sumOf { it.workersCount }
+        allocations.filter { !it.isSecondaryTask }.sumOf { it.workersCount }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
 
     fun setSelectedDate(date: String) {
@@ -240,7 +240,7 @@ class ChantierViewModel(application: Application) : AndroidViewModel(application
     }
 
     // --- TASK ACTIONS ---
-    fun addTask(blocId: Long, title: String, category: String, priority: String, targetDate: String, description: String) {
+    fun addTask(blocId: Long, title: String, category: String, priority: String, targetDate: String, description: String, workQuantity: Double = 0.0, workUnit: String = "", rendement: Double = 0.0) {
         viewModelScope.launch {
             repository.insertTask(
                 TaskItem(
@@ -249,7 +249,10 @@ class ChantierViewModel(application: Application) : AndroidViewModel(application
                     category = category.trim(),
                     priority = priority,
                     targetDate = targetDate.trim(),
-                    description = description.trim()
+                    description = description.trim(),
+                    workQuantity = workQuantity,
+                    workUnit = workUnit,
+                    rendement = rendement
                 )
             )
             _userMessage.value = "Tâche \"$title\" ajoutée"
@@ -259,7 +262,21 @@ class ChantierViewModel(application: Application) : AndroidViewModel(application
     fun updateTask(task: TaskItem) {
         viewModelScope.launch {
             repository.updateTask(task)
-            _userMessage.value = "Tâche modifiée"
+            _userMessage.value = "Tâche \"${task.title}\" modifiée avec succès"
+        }
+    }
+
+    fun moveTaskUp(task: TaskItem) {
+        viewModelScope.launch {
+            repository.moveTaskUp(task)
+            _userMessage.value = "Ordre mis à jour : tâche déplacée vers le haut"
+        }
+    }
+
+    fun moveTaskDown(task: TaskItem) {
+        viewModelScope.launch {
+            repository.moveTaskDown(task)
+            _userMessage.value = "Ordre mis à jour : tâche déplacée vers le bas"
         }
     }
 
@@ -283,7 +300,8 @@ class ChantierViewModel(application: Application) : AndroidViewModel(application
         blocId: Long,
         taskId: Long,
         workersCount: Int,
-        note: String = ""
+        note: String = "",
+        customRendement: Double = 0.0
     ) {
         viewModelScope.launch {
             repository.setWorkerAllocation(
@@ -292,8 +310,37 @@ class ChantierViewModel(application: Application) : AndroidViewModel(application
                 blocId = blocId,
                 taskId = taskId,
                 workersCount = workersCount,
+                note = note,
+                customRendement = customRendement
+            )
+        }
+    }
+
+    fun setDualWorkerAllocation(
+        chefId: Long,
+        blocId1: Long,
+        taskId1: Long,
+        rendement1: Double,
+        blocId2: Long,
+        taskId2: Long,
+        rendement2: Double,
+        workersCount: Int,
+        note: String = ""
+    ) {
+        viewModelScope.launch {
+            repository.setDualWorkerAllocation(
+                date = _selectedDate.value,
+                chefId = chefId,
+                blocId1 = blocId1,
+                taskId1 = taskId1,
+                rendement1 = rendement1,
+                blocId2 = blocId2,
+                taskId2 = taskId2,
+                rendement2 = rendement2,
+                workersCount = workersCount,
                 note = note
             )
+            _userMessage.value = "2 tâches affectées à la même équipe avec succès"
         }
     }
 

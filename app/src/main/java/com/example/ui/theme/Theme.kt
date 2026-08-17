@@ -12,12 +12,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorScheme = darkColorScheme(
-    primary = AmberLight,
-    onPrimary = Color.Black,
-    primaryContainer = AmberDark,
-    onPrimaryContainer = Color.White,
-    secondary = ConstructionYellow,
-    onSecondary = Color.Black,
+    primary = VibrantBlueLight,
+    onPrimary = Color(0xFF003258),
+    primaryContainer = VibrantBlueDark,
+    onPrimaryContainer = VibrantBlueContainer,
+    secondary = VibrantPurpleLight,
+    onSecondary = Color.White,
     background = SlateNavyDark,
     surface = SlateNavyCard,
     surfaceVariant = SlateNavyBorder,
@@ -28,13 +28,18 @@ private val DarkColorScheme = darkColorScheme(
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = AmberDark,
+    primary = VibrantBluePrimary,
     onPrimary = Color.White,
-    primaryContainer = AmberContainer,
-    onPrimaryContainer = OnAmberContainer,
-    secondary = SlateNavyDark,
+    primaryContainer = VibrantBlueContainer,
+    onPrimaryContainer = OnVibrantBlueContainer,
+    secondary = VibrantPurpleLight,
     onSecondary = Color.White,
-    tertiary = ConstructionBlue,
+    secondaryContainer = VibrantPurpleContainer,
+    onSecondaryContainer = VibrantPurpleDeep,
+    tertiary = VibrantOrangePrimary,
+    onTertiary = Color.White,
+    tertiaryContainer = VibrantOrangeContainer,
+    onTertiaryContainer = OnVibrantOrangeContainer,
     background = BackgroundLight,
     surface = SurfaceLight,
     surfaceVariant = SurfaceVariantLight,
@@ -47,7 +52,7 @@ private val LightColorScheme = lightColorScheme(
 @Composable
 fun MyApplicationTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = false, // Use our crisp, tailor-made Construction Safety palette by default
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {

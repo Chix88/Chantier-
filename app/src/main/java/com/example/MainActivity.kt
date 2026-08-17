@@ -6,7 +6,9 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -76,13 +78,28 @@ import com.example.ui.theme.SlateNavyCard
 import com.example.ui.theme.SlateNavyDark
 import com.example.ui.viewmodel.ChantierViewModel
 
+import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.LightMode
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.IconButton
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            MyApplicationTheme {
-                ChantierApp()
+            var isDarkTheme by remember { mutableStateOf(false) }
+            // Initialize with system theme on first composition
+            val systemTheme = isSystemInDarkTheme()
+            LaunchedEffect(Unit) {
+                isDarkTheme = systemTheme
+            }
+
+            MyApplicationTheme(darkTheme = isDarkTheme) {
+                ChantierApp(
+                    isDarkTheme = isDarkTheme,
+                    onThemeToggle = { isDarkTheme = !isDarkTheme }
+                )
             }
         }
     }
@@ -97,7 +114,11 @@ enum class NavTab(val title: String, val testTag: String) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ChantierApp(viewModel: ChantierViewModel = viewModel()) {
+fun ChantierApp(
+    viewModel: ChantierViewModel = viewModel(),
+    isDarkTheme: Boolean = false,
+    onThemeToggle: () -> Unit = {}
+) {
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -137,28 +158,68 @@ fun ChantierApp(viewModel: ChantierViewModel = viewModel()) {
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(
-                            modifier = Modifier
-                                .size(28.dp)
-                                .background(AmberDark, CircleShape),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                Icons.Default.Engineering,
-                                contentDescription = null,
-                                tint = Color.White,
-                                modifier = Modifier.size(16.dp)
-                            )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .size(32.dp)
+                                    .background(com.example.ui.theme.VibrantBluePrimary, CircleShape),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    Icons.Default.Engineering,
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Column {
+                                Text(
+                                    text = "Chantier Horizon",
+                                    style = MaterialTheme.typography.titleMedium.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        color = com.example.ui.theme.TextPrimaryLight,
+                                        letterSpacing = 0.2.sp
+                                    )
+                                )
+                                Text(
+                                    text = "Gestion & Mobilisation",
+                                    style = MaterialTheme.typography.labelSmall.copy(
+                                        color = com.example.ui.theme.TextSecondaryLight,
+                                        fontSize = 11.sp
+                                    )
+                                )
+                            }
                         }
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "Gestion Chantier",
-                            style = MaterialTheme.typography.titleMedium.copy(
-                                fontWeight = FontWeight.ExtraBold,
-                                letterSpacing = 0.3.sp
-                            )
-                        )
+
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            IconButton(onClick = onThemeToggle) {
+                                Icon(
+                                    if (isDarkTheme) Icons.Default.LightMode else Icons.Default.DarkMode,
+                                    contentDescription = "Toggle Theme",
+                                    tint = com.example.ui.theme.TextPrimaryLight
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Box(
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .background(com.example.ui.theme.VibrantBlueContainer, CircleShape),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "ML",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 13.sp,
+                                    color = com.example.ui.theme.OnVibrantBlueContainer
+                                )
+                            }
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
@@ -170,7 +231,7 @@ fun ChantierApp(viewModel: ChantierViewModel = viewModel()) {
         bottomBar = {
             NavigationBar(
                 containerColor = MaterialTheme.colorScheme.surface,
-                tonalElevation = 8.dp
+                tonalElevation = 4.dp
             ) {
                 NavigationBarItem(
                     selected = currentTab == NavTab.BLOCS,
@@ -181,11 +242,13 @@ fun ChantierApp(viewModel: ChantierViewModel = viewModel()) {
                             contentDescription = "Blocs"
                         )
                     },
-                    label = { Text("Blocs & Tâches", fontSize = 11.sp, fontWeight = if (currentTab == NavTab.BLOCS) FontWeight.Bold else FontWeight.Normal) },
+                    label = { Text("Blocs", fontSize = 11.sp, fontWeight = if (currentTab == NavTab.BLOCS) FontWeight.Bold else FontWeight.Medium) },
                     colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = Color.White,
-                        selectedTextColor = AmberDark,
-                        indicatorColor = AmberDark
+                        selectedIconColor = com.example.ui.theme.OnVibrantBlueContainer,
+                        selectedTextColor = com.example.ui.theme.VibrantBluePrimary,
+                        unselectedTextColor = com.example.ui.theme.NeutralPillText,
+                        unselectedIconColor = com.example.ui.theme.NeutralPillText,
+                        indicatorColor = com.example.ui.theme.VibrantBlueContainer
                     ),
                     modifier = Modifier.testTag("tab_blocs")
                 )
@@ -196,14 +259,16 @@ fun ChantierApp(viewModel: ChantierViewModel = viewModel()) {
                     icon = {
                         Icon(
                             if (currentTab == NavTab.ALLOCATIONS) Icons.Filled.Engineering else Icons.Outlined.Engineering,
-                            contentDescription = "Affectations"
+                            contentDescription = "Équipes"
                         )
                     },
-                    label = { Text("Affectations", fontSize = 11.sp, fontWeight = if (currentTab == NavTab.ALLOCATIONS) FontWeight.Bold else FontWeight.Normal) },
+                    label = { Text("Équipes", fontSize = 11.sp, fontWeight = if (currentTab == NavTab.ALLOCATIONS) FontWeight.Bold else FontWeight.Medium) },
                     colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = Color.White,
-                        selectedTextColor = AmberDark,
-                        indicatorColor = AmberDark
+                        selectedIconColor = com.example.ui.theme.OnVibrantBlueContainer,
+                        selectedTextColor = com.example.ui.theme.VibrantBluePrimary,
+                        unselectedTextColor = com.example.ui.theme.NeutralPillText,
+                        unselectedIconColor = com.example.ui.theme.NeutralPillText,
+                        indicatorColor = com.example.ui.theme.VibrantBlueContainer
                     ),
                     modifier = Modifier.testTag("tab_allocations")
                 )
@@ -217,11 +282,13 @@ fun ChantierApp(viewModel: ChantierViewModel = viewModel()) {
                             contentDescription = "Rapport"
                         )
                     },
-                    label = { Text("Rapport Jour", fontSize = 11.sp, fontWeight = if (currentTab == NavTab.DAILY_REPORT) FontWeight.Bold else FontWeight.Normal) },
+                    label = { Text("Rapport", fontSize = 11.sp, fontWeight = if (currentTab == NavTab.DAILY_REPORT) FontWeight.Bold else FontWeight.Medium) },
                     colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = Color.White,
-                        selectedTextColor = AmberDark,
-                        indicatorColor = AmberDark
+                        selectedIconColor = com.example.ui.theme.OnVibrantBlueContainer,
+                        selectedTextColor = com.example.ui.theme.VibrantBluePrimary,
+                        unselectedTextColor = com.example.ui.theme.NeutralPillText,
+                        unselectedIconColor = com.example.ui.theme.NeutralPillText,
+                        indicatorColor = com.example.ui.theme.VibrantBlueContainer
                     ),
                     modifier = Modifier.testTag("tab_daily_report")
                 )
@@ -235,11 +302,13 @@ fun ChantierApp(viewModel: ChantierViewModel = viewModel()) {
                             contentDescription = "Historique"
                         )
                     },
-                    label = { Text("Historique", fontSize = 11.sp, fontWeight = if (currentTab == NavTab.HISTORY) FontWeight.Bold else FontWeight.Normal) },
+                    label = { Text("Historique", fontSize = 11.sp, fontWeight = if (currentTab == NavTab.HISTORY) FontWeight.Bold else FontWeight.Medium) },
                     colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = Color.White,
-                        selectedTextColor = AmberDark,
-                        indicatorColor = AmberDark
+                        selectedIconColor = com.example.ui.theme.OnVibrantBlueContainer,
+                        selectedTextColor = com.example.ui.theme.VibrantBluePrimary,
+                        unselectedTextColor = com.example.ui.theme.NeutralPillText,
+                        unselectedIconColor = com.example.ui.theme.NeutralPillText,
+                        indicatorColor = com.example.ui.theme.VibrantBlueContainer
                     ),
                     modifier = Modifier.testTag("tab_history")
                 )
@@ -250,8 +319,9 @@ fun ChantierApp(viewModel: ChantierViewModel = viewModel()) {
                 NavTab.BLOCS -> {
                     FloatingActionButton(
                         onClick = { showAddTaskDialog = true },
-                        containerColor = AmberDark,
-                        contentColor = Color.White,
+                        containerColor = com.example.ui.theme.VibrantBlueContainer,
+                        contentColor = com.example.ui.theme.OnVibrantBlueContainer,
+                        shape = RoundedCornerShape(16.dp),
                         modifier = Modifier.testTag("fab_add_task")
                     ) {
                         Icon(Icons.Default.Add, contentDescription = "Ajouter Tâche")
@@ -260,11 +330,12 @@ fun ChantierApp(viewModel: ChantierViewModel = viewModel()) {
                 NavTab.ALLOCATIONS -> {
                     FloatingActionButton(
                         onClick = { showAddChefDialog = true },
-                        containerColor = AmberDark,
-                        contentColor = Color.White,
+                        containerColor = com.example.ui.theme.VibrantBlueContainer,
+                        contentColor = com.example.ui.theme.OnVibrantBlueContainer,
+                        shape = RoundedCornerShape(16.dp),
                         modifier = Modifier.testTag("fab_add_chef")
                     ) {
-                        Icon(Icons.Default.Group, contentDescription = "Ajouter Chef")
+                        Icon(Icons.Default.Add, contentDescription = "Ajouter Chef")
                     }
                 }
                 else -> {}
@@ -293,6 +364,9 @@ fun ChantierApp(viewModel: ChantierViewModel = viewModel()) {
                         onUpdateTaskStatus = { taskId, status, percent ->
                             viewModel.updateTaskStatus(taskId, status, percent)
                         },
+                        onEditTask = { viewModel.updateTask(it) },
+                        onMoveTaskUp = { viewModel.moveTaskUp(it) },
+                        onMoveTaskDown = { viewModel.moveTaskDown(it) },
                         onDeleteTask = { viewModel.deleteTask(it) },
                         onDeleteBloc = { viewModel.deleteBloc(it) }
                     )
@@ -314,12 +388,18 @@ fun ChantierApp(viewModel: ChantierViewModel = viewModel()) {
                         onDecrementTaskWorker = { chefId, blocId, taskId, count ->
                             viewModel.decrementTaskWorker(chefId, blocId, taskId, count)
                         },
-                        onSetAllocation = { chefId, blocId, taskId, count, note ->
-                            viewModel.setWorkerAllocation(chefId, blocId, taskId, count, note)
+                        onSetAllocation = { chefId, blocId, taskId, count, note, customRendement ->
+                            viewModel.setWorkerAllocation(chefId, blocId, taskId, count, note, customRendement)
+                        },
+                        onSetDualAllocation = { chefId, b1, t1, r1, b2, t2, r2, count, note ->
+                            viewModel.setDualWorkerAllocation(chefId, b1, t1, r1, b2, t2, r2, count, note)
                         },
                         onDeleteAllocation = { viewModel.deleteAllocation(it) },
                         onAddChefClick = { showAddChefDialog = true },
-                        onDeleteChef = { viewModel.deleteTeamLeader(it) }
+                        onDeleteChef = { viewModel.deleteTeamLeader(it) },
+                        onEditChefCapacity = { chef, newCapacity -> 
+                            viewModel.updateTeamLeader(chef.copy(totalWorkers = newCapacity))
+                        }
                     )
                 }
 
@@ -377,8 +457,8 @@ fun ChantierApp(viewModel: ChantierViewModel = viewModel()) {
                 showAddTaskDialog = false
                 preselectedBlocIdForTask = null
             },
-            onConfirm = { blocId, title, category, priority, targetDate, desc ->
-                viewModel.addTask(blocId, title, category, priority, targetDate, desc)
+            onConfirm = { blocId, title, category, priority, targetDate, desc, quantity, unit, rendement ->
+                viewModel.addTask(blocId, title, category, priority, targetDate, desc, quantity, unit, rendement)
                 showAddTaskDialog = false
                 preselectedBlocIdForTask = null
             }

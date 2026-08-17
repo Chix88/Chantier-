@@ -63,13 +63,20 @@ import com.example.data.model.Bloc
 import com.example.data.model.BlocWorkerSummary
 import com.example.data.model.ChefWithAllocations
 import com.example.data.model.TaskWorkerSummary
-import com.example.ui.theme.AmberDark
-import com.example.ui.theme.AmberLight
-import com.example.ui.theme.AmberPrimary
 import com.example.ui.theme.ConstructionGreen
 import com.example.ui.theme.ConstructionYellow
-import com.example.ui.theme.SlateNavyCard
-import com.example.ui.theme.SlateNavyDark
+import com.example.ui.theme.NeutralPillBg
+import com.example.ui.theme.NeutralPillText
+import com.example.ui.theme.OutlineLight
+import com.example.ui.theme.TextPrimaryLight
+import com.example.ui.theme.TextSecondaryLight
+import com.example.ui.theme.VibrantBlue
+import com.example.ui.theme.VibrantBlueContainer
+import com.example.ui.theme.VibrantBluePrimary
+import com.example.ui.theme.VibrantBlueLight
+import com.example.ui.theme.VibrantPurpleContainer
+import com.example.ui.theme.VibrantPurpleDeep
+import com.example.ui.theme.OnVibrantBlueContainer
 
 @Composable
 fun DailyReportScreen(
@@ -102,6 +109,9 @@ fun DailyReportScreen(
         "Vent fort"
     )
 
+    val activeBlocsCount = remember(blocSummaries) { blocSummaries.count { it.totalWorkers > 0 } }
+    val activeTasksCount = remember(allocations) { allocations.map { it.taskId }.distinct().size }
+
     Box(modifier = modifier.fillMaxSize()) {
         LazyColumn(
             modifier = Modifier
@@ -110,7 +120,7 @@ fun DailyReportScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // Date Selector Bar
-            item {
+            item(key = "date_selector") {
                 DateSelectorBar(
                     currentDate = currentDate,
                     onPreviousDay = onPreviousDay,
@@ -119,19 +129,19 @@ fun DailyReportScreen(
                 )
             }
 
-            // Top Official Header Card
-            item {
-                ElevatedCard(
+            // Top Official Header Card (Vibrant Blue & Purple Theme)
+            item(key = "top_header_card") {
+                Card(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp),
-                    colors = CardDefaults.elevatedCardColors(containerColor = SlateNavyDark),
-                    shape = RoundedCornerShape(16.dp)
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFF001D36)),
+                    shape = RoundedCornerShape(24.dp)
                 ) {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(16.dp)
+                            .padding(20.dp)
                     ) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
@@ -141,30 +151,31 @@ fun DailyReportScreen(
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Box(
                                     modifier = Modifier
-                                        .size(40.dp)
-                                        .background(AmberDark, RoundedCornerShape(10.dp)),
+                                        .size(44.dp)
+                                        .background(VibrantBluePrimary, RoundedCornerShape(14.dp)),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Icon(
                                         Icons.Default.Description,
                                         contentDescription = null,
                                         tint = Color.White,
-                                        modifier = Modifier.size(22.dp)
+                                        modifier = Modifier.size(24.dp)
                                     )
                                 }
-                                Spacer(modifier = Modifier.width(10.dp))
+                                Spacer(modifier = Modifier.width(12.dp))
                                 Column {
                                     Text(
-                                        text = "Rapport Quotidien de Chantier",
+                                        text = "Rapport de Chantier",
                                         style = MaterialTheme.typography.titleMedium.copy(
                                             fontWeight = FontWeight.Bold,
-                                            color = Color.White
+                                            color = Color.White,
+                                            fontSize = 17.sp
                                         )
                                     )
                                     Text(
                                         text = "Récapitulatif automatique des effectifs",
                                         style = MaterialTheme.typography.bodySmall.copy(
-                                            color = Color(0xFF94A3B8),
+                                            color = Color(0xFFD3E4FF),
                                             fontSize = 12.sp
                                         )
                                     )
@@ -172,20 +183,20 @@ fun DailyReportScreen(
                             }
 
                             Surface(
-                                color = AmberDark.copy(alpha = 0.2f),
-                                shape = RoundedCornerShape(8.dp)
+                                color = VibrantBluePrimary.copy(alpha = 0.35f),
+                                shape = RoundedCornerShape(100.dp)
                             ) {
                                 Text(
                                     text = "Auto-Généré",
-                                    color = AmberLight,
+                                    color = Color(0xFFD3E4FF),
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Bold,
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
                                 )
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(18.dp))
 
                         // Key Metrics Row
                         Row(
@@ -197,16 +208,15 @@ fun DailyReportScreen(
                                     text = "$totalWorkersMobilized",
                                     style = MaterialTheme.typography.headlineMedium.copy(
                                         fontWeight = FontWeight.ExtraBold,
-                                        color = AmberLight
+                                        color = Color(0xFFD3E4FF)
                                     )
                                 )
                                 Text(
                                     text = "Ouvriers Mobilisés",
-                                    style = MaterialTheme.typography.labelSmall.copy(color = Color(0xFF94A3B8))
+                                    style = MaterialTheme.typography.labelSmall.copy(color = Color(0xFF8E9099))
                                 )
                             }
 
-                            val activeBlocsCount = blocSummaries.count { it.totalWorkers > 0 }
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 Text(
                                     text = "$activeBlocsCount",
@@ -217,11 +227,10 @@ fun DailyReportScreen(
                                 )
                                 Text(
                                     text = "Blocs Actifs",
-                                    style = MaterialTheme.typography.labelSmall.copy(color = Color(0xFF94A3B8))
+                                    style = MaterialTheme.typography.labelSmall.copy(color = Color(0xFF8E9099))
                                 )
                             }
 
-                            val activeTasksCount = allocations.map { it.taskId }.distinct().size
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 Text(
                                     text = "$activeTasksCount",
@@ -232,7 +241,7 @@ fun DailyReportScreen(
                                 )
                                 Text(
                                     text = "Tâches en Cours",
-                                    style = MaterialTheme.typography.labelSmall.copy(color = Color(0xFF94A3B8))
+                                    style = MaterialTheme.typography.labelSmall.copy(color = Color(0xFF8E9099))
                                 )
                             }
                         }
@@ -240,14 +249,15 @@ fun DailyReportScreen(
                 }
             }
 
-            // Section 1: Detailed Breakdown by Chef & Bloc (Exact user example structure)
-            item {
-                ElevatedCard(
+            // Section 1: Detailed Breakdown by Chef & Bloc
+            item(key = "section_chefs") {
+                Card(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp),
-                    colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    shape = RoundedCornerShape(16.dp)
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    shape = RoundedCornerShape(24.dp),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, OutlineLight)
                 ) {
                     Column(
                         modifier = Modifier
@@ -261,9 +271,12 @@ fun DailyReportScreen(
                         ) {
                             Text(
                                 text = "1. Répartition par Chef & par Bloc",
-                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = TextPrimaryLight
+                                )
                             )
-                            Icon(Icons.Default.Group, contentDescription = null, tint = AmberDark)
+                            Icon(Icons.Default.Group, contentDescription = null, tint = VibrantBluePrimary)
                         }
 
                         Spacer(modifier = Modifier.height(12.dp))
@@ -272,7 +285,7 @@ fun DailyReportScreen(
                             Text(
                                 text = "Aucune affectation d'ouvriers pour le moment sur cette date.",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = TextSecondaryLight
                             )
                         } else {
                             chefsWithAllocations.forEach { chefWithAlloc ->
@@ -280,14 +293,12 @@ fun DailyReportScreen(
                                 val chefAllocs = chefWithAlloc.allocations
 
                                 if (chefAllocs.isNotEmpty()) {
-                                    Card(
+                                    Surface(
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .padding(vertical = 4.dp),
-                                        colors = CardDefaults.cardColors(
-                                            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-                                        ),
-                                        shape = RoundedCornerShape(12.dp)
+                                        color = Color(0xFFF1F4F9),
+                                        shape = RoundedCornerShape(16.dp)
                                     ) {
                                         Column(modifier = Modifier.padding(12.dp)) {
                                             Row(
@@ -298,18 +309,19 @@ fun DailyReportScreen(
                                                 Text(
                                                     text = chef.name,
                                                     fontWeight = FontWeight.Bold,
-                                                    style = MaterialTheme.typography.bodyMedium
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    color = TextPrimaryLight
                                                 )
                                                 Surface(
-                                                    color = AmberDark,
-                                                    shape = RoundedCornerShape(6.dp)
+                                                    color = VibrantBlueContainer,
+                                                    shape = RoundedCornerShape(100.dp)
                                                 ) {
                                                     Text(
                                                         text = "Total : ${chefWithAlloc.allocatedWorkers}/${chef.totalWorkers} ouvriers",
-                                                        color = Color.White,
+                                                        color = OnVibrantBlueContainer,
                                                         fontSize = 11.sp,
                                                         fontWeight = FontWeight.Bold,
-                                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
                                                     )
                                                 }
                                             }
@@ -317,12 +329,12 @@ fun DailyReportScreen(
                                             Text(
                                                 text = "Spécialité : ${chef.specialty}",
                                                 fontSize = 11.sp,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                color = TextSecondaryLight
                                             )
 
                                             HorizontalDivider(
                                                 modifier = Modifier.padding(vertical = 6.dp),
-                                                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+                                                color = OutlineLight.copy(alpha = 0.5f)
                                             )
 
                                             val byBloc = chefAllocs.groupBy { it.blocName }
@@ -332,7 +344,7 @@ fun DailyReportScreen(
                                                     text = "📍 $blocName ($blocSum ouvriers)",
                                                     fontWeight = FontWeight.SemiBold,
                                                     fontSize = 12.sp,
-                                                    color = AmberDark
+                                                    color = VibrantBluePrimary
                                                 )
                                                 taskList.forEach { alloc ->
                                                     Row(
@@ -344,13 +356,13 @@ fun DailyReportScreen(
                                                         Text(
                                                             text = "• ${alloc.taskTitle} (${alloc.taskCategory})",
                                                             fontSize = 12.sp,
-                                                            color = MaterialTheme.colorScheme.onSurface
+                                                            color = TextPrimaryLight
                                                         )
                                                         Text(
                                                             text = "${alloc.workersCount} ouvrier(s)",
                                                             fontWeight = FontWeight.Bold,
                                                             fontSize = 12.sp,
-                                                            color = MaterialTheme.colorScheme.primary
+                                                            color = VibrantBluePrimary
                                                         )
                                                     }
                                                 }
@@ -366,13 +378,14 @@ fun DailyReportScreen(
             }
 
             // Section 2: Synthesis per Task Category
-            item {
-                ElevatedCard(
+            item(key = "section_categories") {
+                Card(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp),
-                    colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    shape = RoundedCornerShape(16.dp)
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    shape = RoundedCornerShape(24.dp),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, OutlineLight)
                 ) {
                     Column(
                         modifier = Modifier
@@ -386,9 +399,12 @@ fun DailyReportScreen(
                         ) {
                             Text(
                                 text = "2. Répartition par Corps d'État & Tâches",
-                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = TextPrimaryLight
+                                )
                             )
-                            Icon(Icons.Default.Engineering, contentDescription = null, tint = AmberDark)
+                            Icon(Icons.Default.Engineering, contentDescription = null, tint = VibrantBluePrimary)
                         }
 
                         Spacer(modifier = Modifier.height(10.dp))
@@ -397,7 +413,7 @@ fun DailyReportScreen(
                             Text(
                                 text = "Aucune tâche actuellement alimentée en main d'œuvre.",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = TextSecondaryLight
                             )
                         } else {
                             taskSummaries.forEach { summary ->
@@ -412,31 +428,34 @@ fun DailyReportScreen(
                                         Box(
                                             modifier = Modifier
                                                 .size(8.dp)
-                                                .background(AmberDark, CircleShape)
+                                                .background(VibrantBluePrimary, CircleShape)
                                         )
                                         Spacer(modifier = Modifier.width(8.dp))
                                         Text(
                                             text = summary.taskCategory,
-                                            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium)
+                                            style = MaterialTheme.typography.bodyMedium.copy(
+                                                fontWeight = FontWeight.Medium,
+                                                color = TextPrimaryLight
+                                            )
                                         )
                                         Spacer(modifier = Modifier.width(6.dp))
                                         Text(
                                             text = "(${summary.taskCount} poste(s))",
                                             fontSize = 11.sp,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            color = TextSecondaryLight
                                         )
                                     }
 
                                     Surface(
-                                        color = MaterialTheme.colorScheme.surfaceVariant,
-                                        shape = RoundedCornerShape(6.dp)
+                                        color = VibrantBlueContainer,
+                                        shape = RoundedCornerShape(100.dp)
                                     ) {
                                         Text(
                                             text = "${summary.totalWorkers} ouvriers",
                                             fontWeight = FontWeight.ExtraBold,
                                             fontSize = 12.sp,
-                                            color = MaterialTheme.colorScheme.onSurface,
-                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                            color = OnVibrantBlueContainer,
+                                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp)
                                         )
                                     }
                                 }
@@ -447,13 +466,14 @@ fun DailyReportScreen(
             }
 
             // Section 3: Journal, Météo & Notes du Conducteur
-            item {
-                ElevatedCard(
+            item(key = "section_notes") {
+                Card(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp),
-                    colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    shape = RoundedCornerShape(16.dp)
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    shape = RoundedCornerShape(24.dp),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, OutlineLight)
                 ) {
                     Column(
                         modifier = Modifier
@@ -463,10 +483,13 @@ fun DailyReportScreen(
                     ) {
                         Text(
                             text = "3. Journal & Observations Chantier",
-                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = TextPrimaryLight
+                            )
                         )
 
-                        Text("Météo du jour :", style = MaterialTheme.typography.labelMedium)
+                        Text("Météo du jour :", style = MaterialTheme.typography.labelMedium, color = TextSecondaryLight)
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(6.dp),
                             modifier = Modifier.fillMaxWidth()
@@ -474,15 +497,15 @@ fun DailyReportScreen(
                             weatherOptions.take(3).forEach { option ->
                                 val isSelected = weather == option
                                 Surface(
-                                    color = if (isSelected) AmberDark else MaterialTheme.colorScheme.surfaceVariant,
-                                    shape = RoundedCornerShape(8.dp),
+                                    color = if (isSelected) VibrantBluePrimary else NeutralPillBg,
+                                    shape = RoundedCornerShape(100.dp),
                                     modifier = Modifier
                                         .clickable { weather = option }
                                         .weight(1f)
                                 ) {
                                     Text(
                                         text = option.substringBefore(" -"),
-                                        color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurface,
+                                        color = if (isSelected) Color.White else NeutralPillText,
                                         fontSize = 11.sp,
                                         fontWeight = FontWeight.SemiBold,
                                         modifier = Modifier.padding(vertical = 6.dp, horizontal = 4.dp),
@@ -497,7 +520,8 @@ fun DailyReportScreen(
                             onValueChange = { notes = it },
                             label = { Text("Observations du Conducteur de Travaux") },
                             modifier = Modifier.fillMaxWidth().testTag("input_report_notes"),
-                            maxLines = 3
+                            maxLines = 3,
+                            shape = RoundedCornerShape(14.dp)
                         )
 
                         OutlinedTextField(
@@ -505,14 +529,15 @@ fun DailyReportScreen(
                             onValueChange = { incidents = it },
                             label = { Text("Livraisons matériaux / Incidents / Sécurité") },
                             modifier = Modifier.fillMaxWidth().testTag("input_report_incidents"),
-                            maxLines = 2
+                            maxLines = 2,
+                            shape = RoundedCornerShape(14.dp)
                         )
                     }
                 }
             }
 
             // Export & Share Action Buttons
-            item {
+            item(key = "section_actions") {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -530,8 +555,8 @@ fun DailyReportScreen(
                             }
                             context.startActivity(Intent.createChooser(shareIntent, "Partager le rapport de chantier"))
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = AmberDark),
-                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = VibrantBluePrimary),
+                        shape = RoundedCornerShape(14.dp),
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(50.dp)
@@ -553,15 +578,16 @@ fun DailyReportScreen(
                                 clipboardManager.setText(AnnotatedString(reportText))
                                 onShowToast("Rapport copié dans le presse-papier !")
                             },
-                            shape = RoundedCornerShape(12.dp),
+                            shape = RoundedCornerShape(14.dp),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, VibrantBluePrimary),
                             modifier = Modifier
                                 .weight(1f)
                                 .height(46.dp)
                                 .testTag("btn_copy_daily_report")
                         ) {
-                            Icon(Icons.Default.ContentCopy, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Icon(Icons.Default.ContentCopy, contentDescription = null, modifier = Modifier.size(18.dp), tint = VibrantBluePrimary)
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text("Copier", fontSize = 13.sp)
+                            Text("Copier", fontSize = 13.sp, color = VibrantBluePrimary, fontWeight = FontWeight.SemiBold)
                         }
 
                         // Save Archive into Room DB
@@ -569,8 +595,8 @@ fun DailyReportScreen(
                             onClick = {
                                 onSaveArchive(weather, notes, incidents)
                             },
-                            colors = ButtonDefaults.buttonColors(containerColor = SlateNavyDark),
-                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = VibrantPurpleDeep),
+                            shape = RoundedCornerShape(14.dp),
                             modifier = Modifier
                                 .weight(1f)
                                 .height(46.dp)
@@ -578,7 +604,7 @@ fun DailyReportScreen(
                         ) {
                             Icon(Icons.Default.Save, contentDescription = null, modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text("Archiver", fontSize = 13.sp)
+                            Text("Archiver", fontSize = 13.sp, fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -586,3 +612,4 @@ fun DailyReportScreen(
         }
     }
 }
+

@@ -18,7 +18,7 @@ import com.example.data.model.TeamLeader
         TaskAllocation::class,
         DailyReport::class
     ],
-    version = 1,
+    version = 3,
     exportSchema = false
 )
 abstract class ChantierDatabase : RoomDatabase() {

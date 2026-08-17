@@ -17,7 +17,11 @@ data class AllocationDetail(
     val taskStatus: String,
     val taskPriority: String,
     val workersCount: Int,
-    val note: String
+    val note: String,
+    val customRendement: Double = 0.0,
+    val isSecondaryTask: Boolean = false,
+    val linkedTaskId: Long? = null,
+    val linkedTaskTitle: String? = null
 )
 
 data class TaskWithAllocationInfo(

@@ -2,6 +2,7 @@ package com.example.ui.screens
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -24,6 +25,7 @@ import androidx.compose.material.icons.filled.Apartment
 import androidx.compose.material.icons.filled.Assignment
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Engineering
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.MoreVert
@@ -53,6 +55,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -70,14 +73,21 @@ import com.example.data.model.Bloc
 import com.example.data.model.ChefWithAllocations
 import com.example.data.model.TaskItem
 import com.example.data.model.TeamLeader
-import com.example.ui.theme.AmberDark
-import com.example.ui.theme.AmberLight
-import com.example.ui.theme.AmberPrimary
 import com.example.ui.theme.ConstructionGreen
 import com.example.ui.theme.ConstructionRed
 import com.example.ui.theme.ConstructionYellow
-import com.example.ui.theme.SlateNavyCard
-import com.example.ui.theme.SlateNavyDark
+import com.example.ui.theme.NeutralPillBg
+import com.example.ui.theme.NeutralPillText
+import com.example.ui.theme.OutlineLight
+import com.example.ui.theme.TextMutedLight
+import com.example.ui.theme.TextPrimaryLight
+import com.example.ui.theme.TextSecondaryLight
+import com.example.ui.theme.VibrantBlue
+import com.example.ui.theme.VibrantBlueContainer
+import com.example.ui.theme.VibrantBluePrimary
+import com.example.ui.theme.VibrantPurpleContainer
+import com.example.ui.theme.VibrantPurpleDeep
+import com.example.ui.theme.OnVibrantBlueContainer
 
 @Composable
 fun AllocationsScreen(
@@ -91,15 +101,19 @@ fun AllocationsScreen(
     onToday: () -> Unit,
     onIncrementTaskWorker: (chefId: Long, blocId: Long, taskId: Long, count: Int) -> Unit,
     onDecrementTaskWorker: (chefId: Long, blocId: Long, taskId: Long, count: Int) -> Unit,
-    onSetAllocation: (chefId: Long, blocId: Long, taskId: Long, count: Int, note: String) -> Unit,
+    onSetAllocation: (chefId: Long, blocId: Long, taskId: Long, count: Int, note: String, customRendement: Double) -> Unit,
+    onSetDualAllocation: (chefId: Long, blocId1: Long, taskId1: Long, rendement1: Double, blocId2: Long, taskId2: Long, rendement2: Double, count: Int, note: String) -> Unit,
     onDeleteAllocation: (Long) -> Unit,
     onAddChefClick: () -> Unit,
     onDeleteChef: (TeamLeader) -> Unit,
+    onEditChefCapacity: (TeamLeader, Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var assigningChef by remember { mutableStateOf<TeamLeader?>(null) }
-
-    val totalAvailableCapacity = chefsWithAllocations.sumOf { it.chef.totalWorkers }
+    var editingChef by remember { mutableStateOf<TeamLeader?>(null) }
+    var editingCapacityStr by remember { mutableStateOf("") }
+    
+    val totalAvailableCapacity = remember(chefsWithAllocations) { chefsWithAllocations.sumOf { it.chef.totalWorkers } }
 
     Box(modifier = modifier.fillMaxSize()) {
         LazyColumn(
@@ -108,122 +122,138 @@ fun AllocationsScreen(
                 .padding(bottom = 80.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Date Navigation Header
-            item {
-                DateSelectorBar(
-                    currentDate = currentDate,
-                    onPreviousDay = onPreviousDay,
-                    onNextDay = onNextDay,
-                    onToday = onToday
-                )
+            // Date Navigation Header with Vibrant Pills
+            item(key = "header_date_nav") {
+                Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp)) {
+                    DateSelectorBar(
+                        currentDate = currentDate,
+                        onPreviousDay = onPreviousDay,
+                        onNextDay = onNextDay,
+                        onToday = onToday
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp)
+                    ) {
+                        Surface(
+                            color = VibrantBluePrimary,
+                            shape = RoundedCornerShape(100.dp)
+                        ) {
+                            Text(
+                                text = currentDate,
+                                color = Color.White,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                            )
+                        }
+
+                        Surface(
+                            color = NeutralPillBg,
+                            shape = RoundedCornerShape(100.dp)
+                        ) {
+                            Text(
+                                text = "${blocs.size} Blocs Actifs",
+                                color = NeutralPillText,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Medium,
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                            )
+                        }
+
+                        Surface(
+                            color = VibrantBlueContainer,
+                            shape = RoundedCornerShape(100.dp)
+                        ) {
+                            Text(
+                                text = "$totalWorkersMobilized / $totalAvailableCapacity Ouvriers",
+                                color = OnVibrantBlueContainer,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                            )
+                        }
+                    }
+                }
             }
 
-            // Global Mobilization Capacity Card
-            item {
-                ElevatedCard(
+            // Quick Rapport Quotidien Purple Banner Card
+            item(key = "banner_report_card") {
+                Card(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp),
-                    colors = CardDefaults.elevatedCardColors(containerColor = SlateNavyDark),
-                    shape = RoundedCornerShape(16.dp)
+                    colors = CardDefaults.cardColors(containerColor = VibrantPurpleContainer),
+                    shape = RoundedCornerShape(24.dp),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFD0BCFF))
                 ) {
-                    Column(
+                    Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(16.dp)
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f)
                         ) {
+                            Box(
+                                modifier = Modifier
+                                .size(48.dp)
+                                .background(VibrantPurpleDeep, RoundedCornerShape(16.dp)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    Icons.Default.Description,
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(12.dp))
                             Column {
                                 Text(
-                                    text = "Affectation Opérationnelle",
-                                    style = MaterialTheme.typography.titleMedium.copy(
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color.White
-                                    )
+                                    text = "Rapport Quotidien",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 15.sp,
+                                    color = VibrantPurpleDeep
                                 )
                                 Text(
-                                    text = "Liaison Chefs d'équipe > Blocs > Tâches > Ouvriers",
-                                    style = MaterialTheme.typography.bodySmall.copy(
-                                        color = Color(0xFF94A3B8),
-                                        fontSize = 12.sp
-                                    )
+                                    text = "Prêt pour consultation et synthèse",
+                                    fontSize = 12.sp,
+                                    color = TextSecondaryLight
                                 )
                             }
-
-                            Button(
-                                onClick = onAddChefClick,
-                                colors = ButtonDefaults.buttonColors(containerColor = AmberDark),
-                                shape = RoundedCornerShape(10.dp),
-                                modifier = Modifier.testTag("btn_add_chef_screen")
-                            ) {
-                                Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text("Nouveau Chef", fontSize = 12.sp)
-                            }
                         }
 
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        // Stats counters
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
+                        Button(
+                            onClick = onAddChefClick,
+                            colors = ButtonDefaults.buttonColors(containerColor = VibrantPurpleDeep),
+                            shape = RoundedCornerShape(100.dp),
+                            modifier = Modifier.testTag("btn_add_chef_screen")
                         ) {
-                            MobilizationMetric(
-                                label = "Ouvriers Mobilisés",
-                                value = "$totalWorkersMobilized",
-                                color = AmberLight,
-                                icon = Icons.Default.Engineering
-                            )
-
-                            MobilizationMetric(
-                                label = "Capacité Totale",
-                                value = "$totalAvailableCapacity",
-                                color = Color.White,
-                                icon = Icons.Default.Group
-                            )
-
-                            MobilizationMetric(
-                                label = "Taux d'affectation",
-                                value = if (totalAvailableCapacity > 0)
-                                    "${(totalWorkersMobilized * 100) / totalAvailableCapacity}%"
-                                else "0%",
-                                color = if (totalWorkersMobilized == totalAvailableCapacity) ConstructionGreen else ConstructionYellow,
-                                icon = Icons.Default.CheckCircle
-                            )
+                            Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Nouveau Chef", fontSize = 12.sp, fontWeight = FontWeight.Bold)
                         }
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        val globalRatio = if (totalAvailableCapacity > 0)
-                            (totalWorkersMobilized.toFloat() / totalAvailableCapacity.toFloat()).coerceIn(0f, 1f)
-                        else 0f
-
-                        LinearProgressIndicator(
-                            progress = { globalRatio },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(6.dp)
-                                .clip(RoundedCornerShape(3.dp)),
-                            color = AmberDark,
-                            trackColor = Color(0xFF334155)
-                        )
                     }
                 }
             }
 
             // List of Team Leaders with allocations
             if (chefsWithAllocations.isEmpty()) {
-                item {
+                item(key = "empty_chefs_card") {
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                        shape = RoundedCornerShape(24.dp),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, OutlineLight)
                     ) {
                         Column(
                             modifier = Modifier
@@ -234,26 +264,27 @@ fun AllocationsScreen(
                             Icon(
                                 Icons.Default.Person,
                                 contentDescription = null,
-                                tint = AmberDark,
+                                tint = VibrantBluePrimary,
                                 modifier = Modifier.size(48.dp)
                             )
                             Spacer(modifier = Modifier.height(12.dp))
                             Text(
                                 "Aucun chef d'équipe configuré",
                                 fontWeight = FontWeight.Bold,
-                                style = MaterialTheme.typography.titleMedium
+                                style = MaterialTheme.typography.titleMedium,
+                                color = TextPrimaryLight
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
                                 "Ajoutez vos chefs d'équipe et renseignez le nombre d'ouvriers sous leur responsabilité.",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = TextSecondaryLight
                             )
                         }
                     }
                 }
             } else {
-                items(chefsWithAllocations) { item ->
+                items(chefsWithAllocations, key = { it.chef.id }) { item ->
                     ChefAllocationCard(
                         chefWithAlloc = item,
                         blocs = blocs,
@@ -276,7 +307,11 @@ fun AllocationsScreen(
                         },
                         onDeleteAllocation = onDeleteAllocation,
                         onAssignNewTaskClick = { assigningChef = item.chef },
-                        onDeleteChef = { onDeleteChef(item.chef) }
+                        onDeleteChef = { onDeleteChef(item.chef) },
+                        onEditCapacityClick = { 
+                            editingChef = item.chef
+                            editingCapacityStr = item.chef.totalWorkers.toString()
+                        }
                     )
                 }
             }
@@ -289,9 +324,46 @@ fun AllocationsScreen(
                 blocs = blocs,
                 tasks = tasks,
                 onDismiss = { assigningChef = null },
-                onConfirm = { blocId, taskId, workersCount, note ->
-                    onSetAllocation(chef.id, blocId, taskId, workersCount, note)
+                onConfirmSingle = { blocId, taskId, workersCount, note, customRendement ->
+                    onSetAllocation(chef.id, blocId, taskId, workersCount, note, customRendement)
                     assigningChef = null
+                },
+                onConfirmDual = { blocId1, taskId1, r1, blocId2, taskId2, r2, count, note ->
+                    onSetDualAllocation(chef.id, blocId1, taskId1, r1, blocId2, taskId2, r2, count, note)
+                    assigningChef = null
+                }
+            )
+        }
+        
+        // Modal dialog to edit chef's capacity
+        editingChef?.let { chef ->
+            AlertDialog(
+                onDismissRequest = { editingChef = null },
+                title = { Text("Modifier l'effectif de ${chef.name}") },
+                text = {
+                    OutlinedTextField(
+                        value = editingCapacityStr,
+                        onValueChange = { editingCapacityStr = it },
+                        label = { Text("Capacité totale d'ouvriers") },
+                        singleLine = true,
+                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number)
+                    )
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            val newCapacity = editingCapacityStr.toIntOrNull()
+                            if (newCapacity != null && newCapacity >= 0) {
+                                onEditChefCapacity(chef, newCapacity)
+                                editingChef = null
+                            }
+                        }
+                    ) {
+                        Text("Enregistrer")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { editingChef = null }) { Text("Annuler") }
                 }
             )
         }
@@ -336,7 +408,8 @@ fun ChefAllocationCard(
     onDecrement: (AllocationDetail) -> Unit,
     onDeleteAllocation: (Long) -> Unit,
     onAssignNewTaskClick: () -> Unit,
-    onDeleteChef: () -> Unit
+    onDeleteChef: () -> Unit,
+    onEditCapacityClick: () -> Unit
 ) {
     val chef = chefWithAlloc.chef
     val totalAssigned = chefWithAlloc.allocatedWorkers
@@ -345,103 +418,103 @@ fun ChefAllocationCard(
 
     var showMenu by remember { mutableStateOf(false) }
 
-    val statusColor = when {
-        totalAssigned == maxWorkers -> ConstructionGreen
-        totalAssigned < maxWorkers -> AmberDark
-        else -> ConstructionRed // Over-allocated alert
+    val statusColor = remember(totalAssigned, maxWorkers) {
+        when {
+            totalAssigned == maxWorkers -> ConstructionGreen
+            totalAssigned < maxWorkers -> VibrantBluePrimary
+            else -> ConstructionRed // Over-allocated alert
+        }
     }
 
-    ElevatedCard(
+    val defaultBloc = remember(blocs, chef.defaultBlocId) { blocs.find { it.id == chef.defaultBlocId } }
+
+    Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp),
-        colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        shape = RoundedCornerShape(24.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        border = androidx.compose.foundation.BorderStroke(1.dp, OutlineLight)
     ) {
-        Column(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
             // Header Bar
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.Top,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(44.dp)
-                            .background(AmberDark.copy(alpha = 0.12f), CircleShape),
-                        contentAlignment = Alignment.Center
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "CHEF D'ÉQUIPE",
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = VibrantBluePrimary,
+                            letterSpacing = 1.5.sp,
+                            fontSize = 10.sp
+                        )
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = chef.name,
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp,
+                            color = TextPrimaryLight
+                        )
+                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(top = 2.dp)
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Engineering,
-                            contentDescription = null,
-                            tint = AmberDark,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.width(12.dp))
-
-                    Column {
                         Text(
-                            text = chef.name,
-                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
-                        )
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                text = chef.specialty,
-                                style = MaterialTheme.typography.bodySmall.copy(
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    fontSize = 12.sp
-                                )
+                            text = "Assigné au ",
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                color = TextSecondaryLight,
+                                fontSize = 13.sp
                             )
-                            if (chef.phone.isNotBlank()) {
-                                Text(
-                                    text = " • ${chef.phone}",
-                                    style = MaterialTheme.typography.bodySmall.copy(
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        fontSize = 12.sp
-                                    )
-                                )
-                            }
-                        }
+                        )
+                        Text(
+                            text = defaultBloc?.name ?: "Tous Blocs",
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = OnVibrantBlueContainer,
+                                fontSize = 13.sp
+                            )
+                        )
                     }
                 }
 
-                // Balance Badge & Menu
                 Row(verticalAlignment = Alignment.CenterVertically) {
+                    // Effectif Badge
                     Surface(
-                        color = statusColor.copy(alpha = 0.12f),
-                        shape = RoundedCornerShape(8.dp)
+                        color = VibrantBlueContainer,
+                        shape = RoundedCornerShape(16.dp),
+                        modifier = Modifier.padding(end = 4.dp)
                     ) {
                         Column(
-                            horizontalAlignment = Alignment.End,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
                         ) {
                             Text(
-                                text = "$totalAssigned / $maxWorkers ouvriers",
-                                fontWeight = FontWeight.ExtraBold,
-                                fontSize = 12.sp,
-                                color = statusColor
+                                text = "EFFECTIF",
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = OnVibrantBlueContainer,
+                                letterSpacing = 1.sp
                             )
                             Text(
-                                text = if (remaining >= 0) "$remaining dispo." else "${-remaining} en trop !",
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = if (remaining >= 0) statusColor else ConstructionRed
+                                text = "$totalAssigned / $maxWorkers",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Black,
+                                color = OnVibrantBlueContainer
                             )
                         }
                     }
 
                     Box {
                         IconButton(onClick = { showMenu = true }) {
-                            Icon(Icons.Default.MoreVert, contentDescription = "Menu Chef")
+                            Icon(Icons.Default.MoreVert, contentDescription = "Menu Chef", tint = TextSecondaryLight)
                         }
                         DropdownMenu(
                             expanded = showMenu,
@@ -452,6 +525,13 @@ fun ChefAllocationCard(
                                 onClick = {
                                     showMenu = false
                                     onAssignNewTaskClick()
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Modifier effectif") },
+                                onClick = {
+                                    showMenu = false
+                                    onEditCapacityClick()
                                 }
                             )
                             DropdownMenuItem(
@@ -466,94 +546,49 @@ fun ChefAllocationCard(
                 }
             }
 
+            Spacer(modifier = Modifier.height(10.dp))
+
             // Progress balance indicator
             val ratio = if (maxWorkers > 0) (totalAssigned.toFloat() / maxWorkers.toFloat()).coerceIn(0f, 1f) else 0f
             LinearProgressIndicator(
                 progress = { ratio },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
                     .height(4.dp)
                     .clip(RoundedCornerShape(2.dp)),
                 color = statusColor,
-                trackColor = MaterialTheme.colorScheme.surfaceVariant
+                trackColor = Color(0xFFE2E8F0)
             )
+
+            Spacer(modifier = Modifier.height(12.dp))
 
             // Allocated Tasks List (Grouped by Bloc)
             Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
+                modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 if (chefWithAlloc.allocations.isEmpty()) {
                     Surface(
-                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
-                        shape = RoundedCornerShape(10.dp),
+                        color = Color(0xFFF1F4F9),
+                        shape = RoundedCornerShape(16.dp),
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text(
-                            text = "Aucune tâche affectée pour cette date. Cliquez ci-dessous pour distribuer les ${chef.totalWorkers} ouvriers sur les tâches des blocs.",
+                            text = "Aucune tâche affectée pour cette date. Cliquez ci-dessous pour distribuer les ${chef.totalWorkers} ouvriers.",
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            color = TextSecondaryLight,
                             modifier = Modifier.padding(12.dp)
                         )
                     }
                 } else {
-                    // Group by Bloc
-                    val groupedByBloc = chefWithAlloc.allocations.groupBy { it.blocName }
-                    groupedByBloc.forEach { (blocName, allocList) ->
-                        val blocTotal = allocList.sumOf { it.workersCount }
-                        val blocColorHex = allocList.firstOrNull()?.blocColorHex ?: "#FF9800"
-                        val blocColor = try {
-                            Color(android.graphics.Color.parseColor(blocColorHex))
-                        } catch (_: Exception) { AmberPrimary }
-
-                        Surface(
-                            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
-                            shape = RoundedCornerShape(12.dp),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Column(modifier = Modifier.padding(10.dp)) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Box(
-                                            modifier = Modifier
-                                                .size(10.dp)
-                                                .background(blocColor, CircleShape)
-                                        )
-                                        Spacer(modifier = Modifier.width(6.dp))
-                                        Text(
-                                            text = blocName,
-                                            fontWeight = FontWeight.ExtraBold,
-                                            style = MaterialTheme.typography.titleSmall
-                                        )
-                                    }
-                                    Text(
-                                        text = "$blocTotal ouvriers au total",
-                                        style = MaterialTheme.typography.labelSmall.copy(
-                                            fontWeight = FontWeight.Bold,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                    )
-                                }
-
-                                Spacer(modifier = Modifier.height(8.dp))
-
-                                allocList.forEach { alloc ->
-                                    AllocationRowItem(
-                                        alloc = alloc,
-                                        onIncrement = { onIncrement(alloc) },
-                                        onDecrement = { onDecrement(alloc) },
-                                        onDelete = { onDeleteAllocation(alloc.allocationId) }
-                                    )
-                                    Spacer(modifier = Modifier.height(6.dp))
-                                }
-                            }
+                    chefWithAlloc.allocations.forEach { alloc ->
+                        key(alloc.allocationId) {
+                            AllocationRowItem(
+                                alloc = alloc,
+                                onIncrement = { onIncrement(alloc) },
+                                onDecrement = { onDecrement(alloc) },
+                                onDelete = { onDeleteAllocation(alloc.allocationId) }
+                            )
                         }
                     }
                 }
@@ -565,14 +600,16 @@ fun ChefAllocationCard(
                         .fillMaxWidth()
                         .padding(top = 4.dp)
                         .testTag("btn_assign_task_to_chef_${chef.id}"),
-                    shape = RoundedCornerShape(10.dp)
+                    shape = RoundedCornerShape(12.dp),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, VibrantBluePrimary)
                 ) {
-                    Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp), tint = VibrantBluePrimary)
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = "Affecter une tâche de Bloc à ${chef.name.take(15)}",
+                        text = "Affecter une tâche à ${chef.name.take(15)}",
                         fontSize = 13.sp,
-                        color = AmberDark
+                        fontWeight = FontWeight.SemiBold,
+                        color = VibrantBluePrimary
                     )
                 }
             }
@@ -587,76 +624,131 @@ fun AllocationRowItem(
     onDecrement: () -> Unit,
     onDelete: () -> Unit
 ) {
-    Card(
+    Surface(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        shape = RoundedCornerShape(10.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        color = Color(0xFFF1F4F9),
+        shape = RoundedCornerShape(16.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 10.dp, vertical = 8.dp),
+                .padding(horizontal = 12.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = alloc.taskTitle,
-                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold)
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = alloc.taskTitle,
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontWeight = FontWeight.SemiBold,
+                            color = TextPrimaryLight,
+                            fontSize = 14.sp
+                        ),
+                        modifier = Modifier.weight(1f, fill = false)
+                    )
+                    if (alloc.isSecondaryTask) {
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Surface(
+                            color = VibrantPurpleContainer,
+                            shape = RoundedCornerShape(100.dp)
+                        ) {
+                            Text(
+                                text = "2e tâche partagée",
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = VibrantPurpleDeep,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            )
+                        }
+                    } else if (alloc.linkedTaskId != null) {
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Surface(
+                            color = VibrantBlueContainer,
+                            shape = RoundedCornerShape(100.dp)
+                        ) {
+                            Text(
+                                text = "1re tâche partagée",
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = OnVibrantBlueContainer,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            )
+                        }
+                    }
+                }
+                
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    modifier = Modifier.padding(top = 2.dp)
                 ) {
                     Text(
-                        text = alloc.taskCategory,
+                        text = alloc.blocName,
                         style = MaterialTheme.typography.labelSmall.copy(
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            fontSize = 10.sp
+                            color = VibrantBluePrimary,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 11.sp
                         )
                     )
                     Text(
                         text = "•",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = TextSecondaryLight,
                         fontSize = 10.sp
                     )
                     Text(
-                        text = alloc.taskStatus,
+                        text = alloc.taskCategory,
                         style = MaterialTheme.typography.labelSmall.copy(
-                            color = if (alloc.taskStatus == "Terminé") ConstructionGreen else AmberDark,
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold
+                            color = TextSecondaryLight,
+                            fontSize = 11.sp
                         )
                     )
+                    if (alloc.customRendement > 0.0) {
+                        Text(
+                            text = "•",
+                            color = TextSecondaryLight,
+                            fontSize = 10.sp
+                        )
+                        val rFmt = if (alloc.customRendement % 1.0 == 0.0) alloc.customRendement.toInt().toString() else String.format(java.util.Locale.FRANCE, "%.1f", alloc.customRendement)
+                        Text(
+                            text = "Rendement ajusté : $rFmt/j",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                color = ConstructionGreen,
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 11.sp
+                            )
+                        )
+                    }
                 }
             }
 
             Spacer(modifier = Modifier.width(8.dp))
 
-            // Stepper [-] [N ouvriers] [+]
-            WorkerCountStepper(
-                count = alloc.workersCount,
-                onIncrement = onIncrement,
-                onDecrement = onDecrement
-            )
-
-            IconButton(
-                onClick = onDelete,
-                modifier = Modifier.size(32.dp)
-            ) {
-                Icon(
-                    Icons.Default.Delete,
-                    contentDescription = "Supprimer affectation",
-                    tint = Color.Gray,
-                    modifier = Modifier.size(16.dp)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                // Stepper with Vibrant styling
+                WorkerCountStepper(
+                    count = alloc.workersCount,
+                    onIncrement = onIncrement,
+                    onDecrement = onDecrement
                 )
+
+                IconButton(
+                    onClick = onDelete,
+                    modifier = Modifier.size(32.dp)
+                ) {
+                    Icon(
+                        Icons.Default.Delete,
+                        contentDescription = "Supprimer affectation",
+                        tint = Color(0xFF94A3B8),
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
             }
         }
     }
 }
 
-// Dialog: Assign Task to Chef
+// Dialog: Assign Task (or Dual Tasks) to Chef
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AssignTaskToChefDialog(
@@ -664,110 +756,143 @@ fun AssignTaskToChefDialog(
     blocs: List<Bloc>,
     tasks: List<TaskItem>,
     onDismiss: () -> Unit,
-    onConfirm: (blocId: Long, taskId: Long, workersCount: Int, note: String) -> Unit
+    onConfirmSingle: (blocId: Long, taskId: Long, workersCount: Int, note: String, customRendement: Double) -> Unit,
+    onConfirmDual: (blocId1: Long, taskId1: Long, r1: Double, blocId2: Long, taskId2: Long, r2: Double, count: Int, note: String) -> Unit
 ) {
-    var selectedBlocId by remember {
+    var isDualTask by remember { mutableStateOf(false) }
+
+    // Task 1 states
+    var selectedBlocId1 by remember {
         mutableStateOf(chef.defaultBlocId ?: blocs.firstOrNull()?.id ?: 0L)
     }
-
-    val availableTasksForBloc = tasks.filter { it.blocId == selectedBlocId }
-
-    var selectedTaskId by remember {
-        mutableStateOf(availableTasksForBloc.firstOrNull()?.id ?: 0L)
+    val tasksForBloc1 = tasks.filter { it.blocId == selectedBlocId1 }
+    var selectedTaskId1 by remember {
+        mutableStateOf(tasksForBloc1.firstOrNull()?.id ?: 0L)
+    }
+    if (tasksForBloc1.none { it.id == selectedTaskId1 } && tasksForBloc1.isNotEmpty()) {
+        selectedTaskId1 = tasksForBloc1.first().id
+    }
+    val task1Obj = tasks.find { it.id == selectedTaskId1 }
+    var rendement1Str by remember(selectedTaskId1) {
+        mutableStateOf(if ((task1Obj?.rendement ?: 0.0) > 0) "${task1Obj?.rendement}" else "")
     }
 
-    // Keep selectedTaskId updated when bloc changes
-    val currentBlocTasks = tasks.filter { it.blocId == selectedBlocId }
-    if (currentBlocTasks.none { it.id == selectedTaskId } && currentBlocTasks.isNotEmpty()) {
-        selectedTaskId = currentBlocTasks.first().id
+    // Task 2 states (if dual task enabled)
+    var selectedBlocId2 by remember {
+        mutableStateOf(chef.defaultBlocId ?: blocs.firstOrNull()?.id ?: 0L)
+    }
+    val tasksForBloc2 = tasks.filter { it.blocId == selectedBlocId2 }
+    var selectedTaskId2 by remember {
+        mutableStateOf(tasksForBloc2.filter { it.id != selectedTaskId1 }.firstOrNull()?.id ?: tasksForBloc2.firstOrNull()?.id ?: 0L)
+    }
+    if (tasksForBloc2.none { it.id == selectedTaskId2 } && tasksForBloc2.isNotEmpty()) {
+        selectedTaskId2 = tasksForBloc2.first().id
+    }
+    val task2Obj = tasks.find { it.id == selectedTaskId2 }
+    var rendement2Str by remember(selectedTaskId2) {
+        mutableStateOf(if ((task2Obj?.rendement ?: 0.0) > 0) "${task2Obj?.rendement}" else "")
     }
 
     var workersCountStr by remember { mutableStateOf("2") }
     var note by remember { mutableStateOf("") }
 
-    var expandedBlocMenu by remember { mutableStateOf(false) }
-    var expandedTaskMenu by remember { mutableStateOf(false) }
+    var expandedBloc1 by remember { mutableStateOf(false) }
+    var expandedTask1 by remember { mutableStateOf(false) }
+    var expandedBloc2 by remember { mutableStateOf(false) }
+    var expandedTask2 by remember { mutableStateOf(false) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.Engineering, contentDescription = null, tint = AmberDark)
+                Icon(Icons.Default.Engineering, contentDescription = null, tint = VibrantBluePrimary)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Affecter Tâche à ${chef.name}", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                Text("Affecter à ${chef.name}", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextPrimaryLight)
             }
         },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(
-                    text = "Choisissez le bloc et la tâche à confier à cette équipe :",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-
-                // Bloc selection dropdown
-                ExposedDropdownMenuBox(
-                    expanded = expandedBlocMenu,
-                    onExpandedChange = { expandedBlocMenu = !expandedBlocMenu }
-                ) {
-                    val currentBloc = blocs.find { it.id == selectedBlocId }
-                    OutlinedTextField(
-                        value = currentBloc?.name ?: "Sélectionner un Bloc",
-                        onValueChange = {},
-                        readOnly = true,
-                        label = { Text("Bloc") },
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedBlocMenu) },
-                        modifier = Modifier.fillMaxWidth().menuAnchor()
-                    )
-                    ExposedDropdownMenu(
-                        expanded = expandedBlocMenu,
-                        onDismissRequest = { expandedBlocMenu = false }
+            androidx.compose.foundation.lazy.LazyColumn(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                // Dual task checkbox
+                item {
+                    Surface(
+                        color = if (isDualTask) VibrantBlueContainer else Color(0xFFF1F4F9),
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        blocs.forEach { bloc ->
-                            DropdownMenuItem(
-                                text = { Text(bloc.name) },
-                                onClick = {
-                                    selectedBlocId = bloc.id
-                                    val tasksForThisBloc = tasks.filter { it.blocId == bloc.id }
-                                    selectedTaskId = tasksForThisBloc.firstOrNull()?.id ?: 0L
-                                    expandedBlocMenu = false
-                                }
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .clickable { isDualTask = !isDualTask }
+                                .padding(horizontal = 8.dp, vertical = 6.dp)
+                        ) {
+                            androidx.compose.material3.Checkbox(
+                                checked = isDualTask,
+                                onCheckedChange = { isDualTask = it },
+                                colors = androidx.compose.material3.CheckboxDefaults.colors(
+                                    checkedColor = VibrantBluePrimary
+                                )
                             )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Column {
+                                Text(
+                                    text = "Affecter 2 tâches au même groupe",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 13.sp,
+                                    color = if (isDualTask) OnVibrantBlueContainer else TextPrimaryLight
+                                )
+                                Text(
+                                    text = "Mêmes ouvriers avec ajustement du rendement par tâche",
+                                    fontSize = 11.sp,
+                                    color = if (isDualTask) OnVibrantBlueContainer.copy(alpha = 0.8f) else TextSecondaryLight
+                                )
+                            }
                         }
                     }
                 }
 
-                // Task selection dropdown
-                if (currentBlocTasks.isEmpty()) {
+                // Section: Task 1
+                item {
                     Text(
-                        "Aucune tâche disponible dans ce bloc.",
-                        color = ConstructionRed,
-                        style = MaterialTheme.typography.bodySmall
+                        text = if (isDualTask) "PREMIÈRE TÂCHE :" else "TÂCHE À AFFECTER :",
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = VibrantBluePrimary,
+                            letterSpacing = 0.5.sp
+                        )
                     )
-                } else {
+                }
+
+                item {
+                    // Bloc 1 selection
                     ExposedDropdownMenuBox(
-                        expanded = expandedTaskMenu,
-                        onExpandedChange = { expandedTaskMenu = !expandedTaskMenu }
+                        expanded = expandedBloc1,
+                        onExpandedChange = { expandedBloc1 = !expandedBloc1 }
                     ) {
-                        val currentTask = currentBlocTasks.find { it.id == selectedTaskId }
+                        val currentBloc = blocs.find { it.id == selectedBlocId1 }
                         OutlinedTextField(
-                            value = currentTask?.title ?: "Sélectionner une Tâche",
+                            value = currentBloc?.name ?: "Sélectionner un Bloc",
                             onValueChange = {},
                             readOnly = true,
-                            label = { Text("Tâche à accomplir") },
-                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedTaskMenu) },
+                            label = { Text("Bloc (Tâche 1)") },
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedBloc1) },
+                            shape = RoundedCornerShape(12.dp),
                             modifier = Modifier.fillMaxWidth().menuAnchor()
                         )
                         ExposedDropdownMenu(
-                            expanded = expandedTaskMenu,
-                            onDismissRequest = { expandedTaskMenu = false }
+                            expanded = expandedBloc1,
+                            onDismissRequest = { expandedBloc1 = false }
                         ) {
-                            currentBlocTasks.forEach { task ->
+                            blocs.forEach { bloc ->
                                 DropdownMenuItem(
-                                    text = { Text("${task.title} [${task.category}]") },
+                                    text = { Text(bloc.name) },
                                     onClick = {
-                                        selectedTaskId = task.id
-                                        expandedTaskMenu = false
+                                        selectedBlocId1 = bloc.id
+                                        val tasksThisBloc = tasks.filter { it.blocId == bloc.id }
+                                        selectedTaskId1 = tasksThisBloc.firstOrNull()?.id ?: 0L
+                                        expandedBloc1 = false
                                     }
                                 )
                             }
@@ -775,41 +900,214 @@ fun AssignTaskToChefDialog(
                     }
                 }
 
-                // Workers Count Input
-                OutlinedTextField(
-                    value = workersCountStr,
-                    onValueChange = { workersCountStr = it.filter { ch -> ch.isDigit() } },
-                    label = { Text("Nombre d'ouvriers affectés sur cette tâche") },
-                    modifier = Modifier.fillMaxWidth().testTag("input_allocated_workers"),
-                    singleLine = true
-                )
+                item {
+                    // Task 1 selection
+                    if (tasksForBloc1.isEmpty()) {
+                        Text("Aucune tâche dans ce bloc.", color = ConstructionRed, style = MaterialTheme.typography.bodySmall)
+                    } else {
+                        ExposedDropdownMenuBox(
+                            expanded = expandedTask1,
+                            onExpandedChange = { expandedTask1 = !expandedTask1 }
+                        ) {
+                            val currentTask = tasksForBloc1.find { it.id == selectedTaskId1 }
+                            OutlinedTextField(
+                                value = currentTask?.title ?: "Sélectionner une Tâche",
+                                onValueChange = {},
+                                readOnly = true,
+                                label = { Text("Tâche 1") },
+                                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedTask1) },
+                                shape = RoundedCornerShape(12.dp),
+                                modifier = Modifier.fillMaxWidth().menuAnchor()
+                            )
+                            ExposedDropdownMenu(
+                                expanded = expandedTask1,
+                                onDismissRequest = { expandedTask1 = false }
+                            ) {
+                                tasksForBloc1.forEach { task ->
+                                    DropdownMenuItem(
+                                        text = { Text("${task.title} [${task.category}]") },
+                                        onClick = {
+                                            selectedTaskId1 = task.id
+                                            expandedTask1 = false
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
 
-                OutlinedTextField(
-                    value = note,
-                    onValueChange = { note = it },
-                    label = { Text("Note / Instructions spéciales (optionnel)") },
-                    modifier = Modifier.fillMaxWidth(),
-                    maxLines = 2
-                )
+                item {
+                    // Rendement Task 1 input
+                    OutlinedTextField(
+                        value = rendement1Str,
+                        onValueChange = { rendement1Str = it },
+                        label = { Text("Rendement spécifique Tâche 1 (qté/ouv/j)") },
+                        singleLine = true,
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.fillMaxWidth().testTag("input_rendement_task1")
+                    )
+                }
+
+                // If Dual Task is checked, show Section 2
+                if (isDualTask) {
+                    item {
+                        HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp), color = OutlineLight)
+                        Text(
+                            text = "DEUXIÈME TÂCHE (MÊME ÉQUIPE) :",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = VibrantPurpleDeep,
+                                letterSpacing = 0.5.sp
+                            )
+                        )
+                    }
+
+                    item {
+                        // Bloc 2 selection
+                        ExposedDropdownMenuBox(
+                            expanded = expandedBloc2,
+                            onExpandedChange = { expandedBloc2 = !expandedBloc2 }
+                        ) {
+                            val currentBloc = blocs.find { it.id == selectedBlocId2 }
+                            OutlinedTextField(
+                                value = currentBloc?.name ?: "Sélectionner un Bloc",
+                                onValueChange = {},
+                                readOnly = true,
+                                label = { Text("Bloc (Tâche 2)") },
+                                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedBloc2) },
+                                shape = RoundedCornerShape(12.dp),
+                                modifier = Modifier.fillMaxWidth().menuAnchor()
+                            )
+                            ExposedDropdownMenu(
+                                expanded = expandedBloc2,
+                                onDismissRequest = { expandedBloc2 = false }
+                            ) {
+                                blocs.forEach { bloc ->
+                                    DropdownMenuItem(
+                                        text = { Text(bloc.name) },
+                                        onClick = {
+                                            selectedBlocId2 = bloc.id
+                                            val tasksThisBloc = tasks.filter { it.blocId == bloc.id }
+                                            selectedTaskId2 = tasksThisBloc.firstOrNull()?.id ?: 0L
+                                            expandedBloc2 = false
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    item {
+                        // Task 2 selection
+                        if (tasksForBloc2.isEmpty()) {
+                            Text("Aucune tâche dans ce bloc.", color = ConstructionRed, style = MaterialTheme.typography.bodySmall)
+                        } else {
+                            ExposedDropdownMenuBox(
+                                expanded = expandedTask2,
+                                onExpandedChange = { expandedTask2 = !expandedTask2 }
+                            ) {
+                                val currentTask = tasksForBloc2.find { it.id == selectedTaskId2 }
+                                OutlinedTextField(
+                                    value = currentTask?.title ?: "Sélectionner Tâche 2",
+                                    onValueChange = {},
+                                    readOnly = true,
+                                    label = { Text("Tâche 2") },
+                                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedTask2) },
+                                    shape = RoundedCornerShape(12.dp),
+                                    modifier = Modifier.fillMaxWidth().menuAnchor()
+                                )
+                                ExposedDropdownMenu(
+                                    expanded = expandedTask2,
+                                    onDismissRequest = { expandedTask2 = false }
+                                ) {
+                                    tasksForBloc2.forEach { task ->
+                                        DropdownMenuItem(
+                                            text = { Text("${task.title} [${task.category}]") },
+                                            onClick = {
+                                                selectedTaskId2 = task.id
+                                                expandedTask2 = false
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    item {
+                        // Rendement Task 2 input
+                        OutlinedTextField(
+                            value = rendement2Str,
+                            onValueChange = { rendement2Str = it },
+                            label = { Text("Rendement spécifique Tâche 2 (qté/ouv/j)") },
+                            singleLine = true,
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.fillMaxWidth().testTag("input_rendement_task2")
+                        )
+                    }
+                }
+
+                item {
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp), color = OutlineLight)
+                }
+
+                // Team size input
+                item {
+                    OutlinedTextField(
+                        value = workersCountStr,
+                        onValueChange = { workersCountStr = it.filter { ch -> ch.isDigit() } },
+                        label = { Text(if (isDualTask) "Nombre d'ouvriers de l'équipe mobilisée" else "Nombre d'ouvriers affectés") },
+                        modifier = Modifier.fillMaxWidth().testTag("input_allocated_workers"),
+                        singleLine = true,
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                }
+
+                item {
+                    OutlinedTextField(
+                        value = note,
+                        onValueChange = { note = it },
+                        label = { Text("Note / Consignes (optionnel)") },
+                        modifier = Modifier.fillMaxWidth(),
+                        maxLines = 2,
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                }
             }
         },
         confirmButton = {
             Button(
                 onClick = {
                     val count = workersCountStr.toIntOrNull() ?: 1
-                    if (selectedBlocId > 0 && selectedTaskId > 0 && count > 0) {
-                        onConfirm(selectedBlocId, selectedTaskId, count, note)
+                    val r1 = rendement1Str.toDoubleOrNull() ?: 0.0
+                    val r2 = rendement2Str.toDoubleOrNull() ?: 0.0
+
+                    if (isDualTask) {
+                        if (selectedBlocId1 > 0 && selectedTaskId1 > 0 && selectedBlocId2 > 0 && selectedTaskId2 > 0 && count > 0) {
+                            onConfirmDual(selectedBlocId1, selectedTaskId1, r1, selectedBlocId2, selectedTaskId2, r2, count, note)
+                        }
+                    } else {
+                        if (selectedBlocId1 > 0 && selectedTaskId1 > 0 && count > 0) {
+                            onConfirmSingle(selectedBlocId1, selectedTaskId1, count, note, r1)
+                        }
                     }
                 },
-                enabled = selectedBlocId > 0 && selectedTaskId > 0 && (workersCountStr.toIntOrNull() ?: 0) > 0,
-                colors = ButtonDefaults.buttonColors(containerColor = AmberDark),
+                enabled = if (isDualTask) {
+                    selectedBlocId1 > 0 && selectedTaskId1 > 0 && selectedBlocId2 > 0 && selectedTaskId2 > 0 && (workersCountStr.toIntOrNull() ?: 0) > 0
+                } else {
+                    selectedBlocId1 > 0 && selectedTaskId1 > 0 && (workersCountStr.toIntOrNull() ?: 0) > 0
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = VibrantBluePrimary),
+                shape = RoundedCornerShape(12.dp),
                 modifier = Modifier.testTag("btn_confirm_task_allocation")
             ) {
-                Text("Valider l'Affectation")
+                Text("Valider l'Affectation", fontWeight = FontWeight.Bold)
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Annuler") }
+            TextButton(onClick = onDismiss) { Text("Annuler", color = TextSecondaryLight) }
         }
     )
 }
+

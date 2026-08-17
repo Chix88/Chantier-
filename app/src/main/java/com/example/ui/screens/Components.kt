@@ -67,13 +67,21 @@ import androidx.compose.ui.unit.sp
 import com.example.data.model.Bloc
 import com.example.data.model.TaskItem
 import com.example.data.model.TeamLeader
-import com.example.ui.theme.AmberDark
-import com.example.ui.theme.AmberPrimary
 import com.example.ui.theme.ConstructionGreen
 import com.example.ui.theme.ConstructionRed
 import com.example.ui.theme.ConstructionYellow
-import com.example.ui.theme.SlateNavyCard
-import com.example.ui.theme.SlateNavyDark
+import com.example.ui.theme.NeutralPillBg
+import com.example.ui.theme.NeutralPillText
+import com.example.ui.theme.OnVibrantBlueContainer
+import com.example.ui.theme.OutlineLight
+import com.example.ui.theme.TextPrimaryLight
+import com.example.ui.theme.TextSecondaryLight
+import com.example.ui.theme.VibrantBlue
+import com.example.ui.theme.VibrantBlueContainer
+import com.example.ui.theme.VibrantBluePrimary
+import com.example.ui.theme.VibrantOrangePrimary
+import com.example.ui.theme.VibrantPurpleDeep
+import com.example.ui.theme.VibrantPurple
 
 @Composable
 fun DateSelectorBar(
@@ -87,9 +95,9 @@ fun DateSelectorBar(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        shape = RoundedCornerShape(16.dp)
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        shape = RoundedCornerShape(20.dp),
+        border = androidx.compose.foundation.BorderStroke(1.dp, OutlineLight)
     ) {
         Row(
             modifier = Modifier
@@ -107,21 +115,21 @@ fun DateSelectorBar(
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = "Jour précédent",
-                    tint = MaterialTheme.colorScheme.primary
+                    tint = VibrantBluePrimary
                 )
             }
 
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
-                    .clip(RoundedCornerShape(8.dp))
+                    .clip(RoundedCornerShape(100.dp))
                     .clickable { onToday() }
-                    .padding(horizontal = 10.dp, vertical = 6.dp)
+                    .padding(horizontal = 12.dp, vertical = 6.dp)
             ) {
                 Icon(
                     imageVector = Icons.Default.CalendarToday,
                     contentDescription = "Date du jour",
-                    tint = AmberDark,
+                    tint = VibrantBluePrimary,
                     modifier = Modifier.size(18.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
@@ -130,13 +138,13 @@ fun DateSelectorBar(
                         text = currentDate,
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
+                            color = TextPrimaryLight
                         )
                     )
                     Text(
                         text = "Toucher pour aujourd'hui",
                         style = MaterialTheme.typography.labelSmall.copy(
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            color = TextSecondaryLight,
                             fontSize = 10.sp
                         )
                     )
@@ -152,7 +160,7 @@ fun DateSelectorBar(
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                     contentDescription = "Jour suivant",
-                    tint = MaterialTheme.colorScheme.primary
+                    tint = VibrantBluePrimary
                 )
             }
         }
@@ -162,16 +170,16 @@ fun DateSelectorBar(
 @Composable
 fun StatusBadge(status: String, modifier: Modifier = Modifier) {
     val (bgColor, textColor) = when (status) {
-        "Terminé", "Livré" -> Pair(Color(0xFFE8F5E9), Color(0xFF2E7D32))
-        "En cours" -> Pair(Color(0xFFFFF3E0), Color(0xFFE65100))
-        "À faire", "Planifié" -> Pair(Color(0xFFE3F2FD), Color(0xFF1565C0))
-        "Urgente", "En attente" -> Pair(Color(0xFFFFEBEE), Color(0xFFC62828))
-        else -> Pair(Color(0xFFF1F5F9), Color(0xFF475569))
+        "Terminé", "Livré" -> Pair(Color(0xFFDCFCE7), Color(0xFF166534))
+        "En cours" -> Pair(VibrantBlueContainer, OnVibrantBlueContainer)
+        "À faire", "Planifié" -> Pair(Color(0xFFF3E8FF), VibrantPurpleDeep)
+        "Urgente", "En attente" -> Pair(Color(0xFFFFEDD5), Color(0xFFC2410C))
+        else -> Pair(NeutralPillBg, NeutralPillText)
     }
 
     Surface(
         color = bgColor,
-        shape = RoundedCornerShape(8.dp),
+        shape = RoundedCornerShape(100.dp),
         modifier = modifier
     ) {
         Text(
@@ -181,7 +189,7 @@ fun StatusBadge(status: String, modifier: Modifier = Modifier) {
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 11.sp
             ),
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
         )
     }
 }
@@ -189,17 +197,17 @@ fun StatusBadge(status: String, modifier: Modifier = Modifier) {
 @Composable
 fun PriorityBadge(priority: String, modifier: Modifier = Modifier) {
     val color = when (priority) {
-        "Urgente" -> ConstructionRed
-        "Haute" -> AmberDark
-        "Moyenne" -> ConstructionYellow
+        "Urgente" -> Color(0xFFEF4444)
+        "Haute" -> VibrantOrangePrimary
+        "Moyenne" -> VibrantBluePrimary
         else -> Color(0xFF64748B)
     }
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
-            .background(color.copy(alpha = 0.12f), RoundedCornerShape(6.dp))
-            .padding(horizontal = 6.dp, vertical = 2.dp)
+            .background(color.copy(alpha = 0.12f), RoundedCornerShape(100.dp))
+            .padding(horizontal = 8.dp, vertical = 2.dp)
     ) {
         Box(
             modifier = Modifier
@@ -229,8 +237,8 @@ fun WorkerCountStepper(
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
             .background(
-                MaterialTheme.colorScheme.surfaceVariant,
-                RoundedCornerShape(12.dp)
+                Color(0xFFF1F4F9),
+                RoundedCornerShape(100.dp)
             )
             .padding(horizontal = 4.dp, vertical = 2.dp)
     ) {
@@ -244,7 +252,7 @@ fun WorkerCountStepper(
             Icon(
                 imageVector = Icons.Default.Remove,
                 contentDescription = "Diminuer ouvriers",
-                tint = if (count > 0) AmberDark else Color.Gray,
+                tint = if (count > 0) VibrantBluePrimary else Color.Gray,
                 modifier = Modifier.size(16.dp)
             )
         }
@@ -256,7 +264,7 @@ fun WorkerCountStepper(
             Icon(
                 imageVector = Icons.Default.Engineering,
                 contentDescription = null,
-                tint = AmberDark,
+                tint = VibrantBluePrimary,
                 modifier = Modifier.size(16.dp)
             )
             Spacer(modifier = Modifier.width(4.dp))
@@ -264,7 +272,7 @@ fun WorkerCountStepper(
                 text = "$count",
                 style = MaterialTheme.typography.titleMedium.copy(
                     fontWeight = FontWeight.ExtraBold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = TextPrimaryLight
                 )
             )
         }
@@ -278,7 +286,7 @@ fun WorkerCountStepper(
             Icon(
                 imageVector = Icons.Default.Add,
                 contentDescription = "Augmenter ouvriers",
-                tint = AmberDark,
+                tint = VibrantBluePrimary,
                 modifier = Modifier.size(16.dp)
             )
         }
@@ -295,17 +303,17 @@ fun AddBlocDialog(
     var code by remember { mutableStateOf("") }
     var desc by remember { mutableStateOf("") }
     var surface by remember { mutableStateOf("") }
-    var selectedColor by remember { mutableStateOf("#FF9800") }
+    var selectedColor by remember { mutableStateOf("#0061A4") }
 
-    val colors = listOf("#FF9800", "#2196F3", "#4CAF50", "#9C27B0", "#E91E63", "#00BCD4")
+    val colors = listOf("#0061A4", "#7C3AED", "#FF6F00", "#10B981", "#EC4899", "#06B6D4")
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.Apartment, contentDescription = null, tint = AmberDark)
+                Icon(Icons.Default.Apartment, contentDescription = null, tint = VibrantBluePrimary)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Nouveau Bloc de Chantier", fontWeight = FontWeight.Bold)
+                Text("Nouveau Bloc de Chantier", fontWeight = FontWeight.Bold, color = TextPrimaryLight)
             }
         },
         text = {
@@ -320,6 +328,7 @@ fun AddBlocDialog(
                     },
                     label = { Text("Nom du Bloc (ex: Bloc A, Bâtiment 2)") },
                     singleLine = true,
+                    shape = RoundedCornerShape(14.dp),
                     modifier = Modifier.fillMaxWidth().testTag("input_bloc_name")
                 )
 
@@ -328,6 +337,7 @@ fun AddBlocDialog(
                     onValueChange = { code = it },
                     label = { Text("Code Identifiant (ex: BLOC-A)") },
                     singleLine = true,
+                    shape = RoundedCornerShape(14.dp),
                     modifier = Modifier.fillMaxWidth().testTag("input_bloc_code")
                 )
 
@@ -336,6 +346,7 @@ fun AddBlocDialog(
                     onValueChange = { desc = it },
                     label = { Text("Description (ex: Bâtiment R+5 Logements)") },
                     singleLine = true,
+                    shape = RoundedCornerShape(14.dp),
                     modifier = Modifier.fillMaxWidth()
                 )
 
@@ -344,13 +355,14 @@ fun AddBlocDialog(
                     onValueChange = { surface = it },
                     label = { Text("Surface / Étage (ex: R+4 • 1 200 m²)") },
                     singleLine = true,
+                    shape = RoundedCornerShape(14.dp),
                     modifier = Modifier.fillMaxWidth()
                 )
 
                 Text(
                     "Couleur repère :",
                     style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = TextSecondaryLight
                 )
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     colors.forEach { hex ->
@@ -363,7 +375,7 @@ fun AddBlocDialog(
                                 .clickable { selectedColor = hex }
                                 .border(
                                     width = if (selectedColor == hex) 3.dp else 1.dp,
-                                    color = if (selectedColor == hex) MaterialTheme.colorScheme.onSurface else Color.Transparent,
+                                    color = if (selectedColor == hex) TextPrimaryLight else Color.Transparent,
                                     shape = CircleShape
                                 )
                         ) {
@@ -388,15 +400,16 @@ fun AddBlocDialog(
                     }
                 },
                 enabled = name.isNotBlank(),
-                colors = ButtonDefaults.buttonColors(containerColor = AmberDark),
+                colors = ButtonDefaults.buttonColors(containerColor = VibrantBluePrimary),
+                shape = RoundedCornerShape(12.dp),
                 modifier = Modifier.testTag("btn_confirm_add_bloc")
             ) {
-                Text("Ajouter le Bloc")
+                Text("Ajouter le Bloc", fontWeight = FontWeight.Bold)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Annuler")
+                Text("Annuler", color = TextSecondaryLight)
             }
         }
     )
@@ -409,7 +422,7 @@ fun AddTaskDialog(
     blocs: List<Bloc>,
     preselectedBlocId: Long?,
     onDismiss: () -> Unit,
-    onConfirm: (blocId: Long, title: String, category: String, priority: String, targetDate: String, desc: String) -> Unit
+    onConfirm: (blocId: Long, title: String, category: String, priority: String, targetDate: String, desc: String, workQuantity: Double, workUnit: String, rendement: Double) -> Unit
 ) {
     var selectedBlocId by remember {
         mutableStateOf(preselectedBlocId ?: blocs.firstOrNull()?.id ?: 0L)
@@ -419,6 +432,9 @@ fun AddTaskDialog(
     var priority by remember { mutableStateOf("Haute") }
     var targetDate by remember { mutableStateOf("") }
     var desc by remember { mutableStateOf("") }
+    var workQuantityStr by remember { mutableStateOf("") }
+    var workUnit by remember { mutableStateOf("Unités") }
+    var rendementStr by remember { mutableStateOf("") }
 
     val categories = listOf(
         "Gros Œuvre",
@@ -432,17 +448,19 @@ fun AddTaskDialog(
         "Peinture"
     )
     val priorities = listOf("Basse", "Moyenne", "Haute", "Urgente")
+    val units = listOf("Unités", "Fonds", "m²", "m³", "ml", "T")
 
     var expandedBlocDropdown by remember { mutableStateOf(false) }
     var expandedCatDropdown by remember { mutableStateOf(false) }
+    var expandedUnitDropdown by remember { mutableStateOf(false) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.Engineering, contentDescription = null, tint = AmberDark)
+                Icon(Icons.Default.Engineering, contentDescription = null, tint = VibrantBluePrimary)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Nouvelle Tâche de Bloc", fontWeight = FontWeight.Bold)
+                Text("Nouvelle Tâche de Bloc", fontWeight = FontWeight.Bold, color = TextPrimaryLight)
             }
         },
         text = {
@@ -459,6 +477,7 @@ fun AddTaskDialog(
                         readOnly = true,
                         label = { Text("Bloc concerné") },
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedBlocDropdown) },
+                        shape = RoundedCornerShape(14.dp),
                         modifier = Modifier.fillMaxWidth().menuAnchor()
                     )
                     ExposedDropdownMenu(
@@ -482,6 +501,7 @@ fun AddTaskDialog(
                     onValueChange = { title = it },
                     label = { Text("Intitulé tâche (ex: Tâche 1 - Coffrage voiles)") },
                     singleLine = true,
+                    shape = RoundedCornerShape(14.dp),
                     modifier = Modifier.fillMaxWidth().testTag("input_task_title")
                 )
 
@@ -496,6 +516,7 @@ fun AddTaskDialog(
                         readOnly = true,
                         label = { Text("Corps d'état / Catégorie") },
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedCatDropdown) },
+                        shape = RoundedCornerShape(14.dp),
                         modifier = Modifier.fillMaxWidth().menuAnchor()
                     )
                     ExposedDropdownMenu(
@@ -519,7 +540,7 @@ fun AddTaskDialog(
                     Text(
                         "Priorité :",
                         style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = TextSecondaryLight
                     )
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -530,13 +551,13 @@ fun AddTaskDialog(
                             FilledTonalButton(
                                 onClick = { priority = p },
                                 colors = ButtonDefaults.filledTonalButtonColors(
-                                    containerColor = if (isSelected) AmberDark else MaterialTheme.colorScheme.surfaceVariant,
-                                    contentColor = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
+                                    containerColor = if (isSelected) VibrantBluePrimary else NeutralPillBg,
+                                    contentColor = if (isSelected) Color.White else NeutralPillText
                                 ),
-                                shape = RoundedCornerShape(8.dp),
+                                shape = RoundedCornerShape(100.dp),
                                 modifier = Modifier.height(36.dp)
                             ) {
-                                Text(p, fontSize = 12.sp)
+                                Text(p, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                             }
                         }
                     }
@@ -547,6 +568,59 @@ fun AddTaskDialog(
                     onValueChange = { desc = it },
                     label = { Text("Détails / Instructions spécifiques") },
                     maxLines = 2,
+                    shape = RoundedCornerShape(14.dp),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedTextField(
+                        value = workQuantityStr,
+                        onValueChange = { workQuantityStr = it },
+                        label = { Text("Quantité totale") },
+                        singleLine = true,
+                        shape = RoundedCornerShape(14.dp),
+                        modifier = Modifier.weight(1f)
+                    )
+                    ExposedDropdownMenuBox(
+                        expanded = expandedUnitDropdown,
+                        onExpandedChange = { expandedUnitDropdown = !expandedUnitDropdown },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        OutlinedTextField(
+                            value = workUnit,
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text("Unité") },
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedUnitDropdown) },
+                            shape = RoundedCornerShape(14.dp),
+                            modifier = Modifier.fillMaxWidth().menuAnchor()
+                        )
+                        ExposedDropdownMenu(
+                            expanded = expandedUnitDropdown,
+                            onDismissRequest = { expandedUnitDropdown = false }
+                        ) {
+                            units.forEach { u ->
+                                DropdownMenuItem(
+                                    text = { Text(u) },
+                                    onClick = {
+                                        workUnit = u
+                                        expandedUnitDropdown = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+                
+                OutlinedTextField(
+                    value = rendementStr,
+                    onValueChange = { rendementStr = it },
+                    label = { Text("Rendement (qté/ouvrier/jour)") },
+                    singleLine = true,
+                    shape = RoundedCornerShape(14.dp),
                     modifier = Modifier.fillMaxWidth()
                 )
             }
@@ -555,19 +629,339 @@ fun AddTaskDialog(
             Button(
                 onClick = {
                     if (title.isNotBlank() && selectedBlocId > 0) {
-                        onConfirm(selectedBlocId, title, category, priority, targetDate, desc)
+                        val q = workQuantityStr.toDoubleOrNull() ?: 0.0
+                        val r = rendementStr.toDoubleOrNull() ?: 0.0
+                        onConfirm(selectedBlocId, title, category, priority, targetDate, desc, q, workUnit, r)
                     }
                 },
                 enabled = title.isNotBlank() && selectedBlocId > 0,
-                colors = ButtonDefaults.buttonColors(containerColor = AmberDark),
+                colors = ButtonDefaults.buttonColors(containerColor = VibrantBluePrimary),
+                shape = RoundedCornerShape(12.dp),
                 modifier = Modifier.testTag("btn_confirm_add_task")
             ) {
-                Text("Ajouter la Tâche")
+                Text("Ajouter la Tâche", fontWeight = FontWeight.Bold)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Annuler")
+                Text("Annuler", color = TextSecondaryLight)
+            }
+        }
+    )
+}
+
+// Dialog: Edit Task (Modifier une tâche)
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun EditTaskDialog(
+    task: TaskItem,
+    blocs: List<Bloc>,
+    onDismiss: () -> Unit,
+    onConfirm: (TaskItem) -> Unit
+) {
+    var selectedBlocId by remember { mutableStateOf(task.blocId) }
+    var title by remember { mutableStateOf(task.title) }
+    var category by remember { mutableStateOf(task.category) }
+    var priority by remember { mutableStateOf(task.priority) }
+    var status by remember { mutableStateOf(task.status) }
+    var desc by remember { mutableStateOf(task.description) }
+    var workQuantityStr by remember { mutableStateOf(if (task.workQuantity > 0) "${task.workQuantity}" else "") }
+    var completedQuantityStr by remember { mutableStateOf(if (task.completedQuantity > 0) "${task.completedQuantity}" else "") }
+    var workUnit by remember { mutableStateOf(task.workUnit.ifEmpty { "Unités" }) }
+    var rendementStr by remember { mutableStateOf(if (task.rendement > 0) "${task.rendement}" else "") }
+
+    val categories = listOf(
+        "Gros Œuvre",
+        "Ferraillage",
+        "Béton",
+        "Maçonnerie",
+        "Électricité",
+        "Plomberie",
+        "Étanchéité",
+        "Finitions",
+        "Peinture"
+    )
+    val priorities = listOf("Basse", "Moyenne", "Haute", "Urgente")
+    val statuses = listOf("À faire", "En cours", "Terminé", "En attente")
+    val units = listOf("Unités", "Fonds", "m²", "m³", "ml", "T")
+
+    var expandedBlocDropdown by remember { mutableStateOf(false) }
+    var expandedCatDropdown by remember { mutableStateOf(false) }
+    var expandedStatusDropdown by remember { mutableStateOf(false) }
+    var expandedUnitDropdown by remember { mutableStateOf(false) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.Engineering, contentDescription = null, tint = VibrantBluePrimary)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Modifier la Tâche", fontWeight = FontWeight.Bold, color = TextPrimaryLight)
+            }
+        },
+        text = {
+            androidx.compose.foundation.lazy.LazyColumn(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                item {
+                    // Bloc selection dropdown
+                    ExposedDropdownMenuBox(
+                        expanded = expandedBlocDropdown,
+                        onExpandedChange = { expandedBlocDropdown = !expandedBlocDropdown }
+                    ) {
+                        val currentBlocName = blocs.find { it.id == selectedBlocId }?.name ?: "Sélectionner un bloc"
+                        OutlinedTextField(
+                            value = currentBlocName,
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text("Bloc concerné") },
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedBlocDropdown) },
+                            shape = RoundedCornerShape(14.dp),
+                            modifier = Modifier.fillMaxWidth().menuAnchor()
+                        )
+                        ExposedDropdownMenu(
+                            expanded = expandedBlocDropdown,
+                            onDismissRequest = { expandedBlocDropdown = false }
+                        ) {
+                            blocs.forEach { bloc ->
+                                DropdownMenuItem(
+                                    text = { Text(bloc.name) },
+                                    onClick = {
+                                        selectedBlocId = bloc.id
+                                        expandedBlocDropdown = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+
+                item {
+                    OutlinedTextField(
+                        value = title,
+                        onValueChange = { title = it },
+                        label = { Text("Intitulé tâche") },
+                        singleLine = true,
+                        shape = RoundedCornerShape(14.dp),
+                        modifier = Modifier.fillMaxWidth().testTag("input_edit_task_title")
+                    )
+                }
+
+                item {
+                    // Category & Status
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        ExposedDropdownMenuBox(
+                            expanded = expandedCatDropdown,
+                            onExpandedChange = { expandedCatDropdown = !expandedCatDropdown },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            OutlinedTextField(
+                                value = category,
+                                onValueChange = {},
+                                readOnly = true,
+                                label = { Text("Catégorie") },
+                                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedCatDropdown) },
+                                shape = RoundedCornerShape(14.dp),
+                                modifier = Modifier.fillMaxWidth().menuAnchor()
+                            )
+                            ExposedDropdownMenu(
+                                expanded = expandedCatDropdown,
+                                onDismissRequest = { expandedCatDropdown = false }
+                            ) {
+                                categories.forEach { cat ->
+                                    DropdownMenuItem(
+                                        text = { Text(cat) },
+                                        onClick = {
+                                            category = cat
+                                            expandedCatDropdown = false
+                                        }
+                                    )
+                                }
+                            }
+                        }
+
+                        ExposedDropdownMenuBox(
+                            expanded = expandedStatusDropdown,
+                            onExpandedChange = { expandedStatusDropdown = !expandedStatusDropdown },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            OutlinedTextField(
+                                value = status,
+                                onValueChange = {},
+                                readOnly = true,
+                                label = { Text("Statut") },
+                                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedStatusDropdown) },
+                                shape = RoundedCornerShape(14.dp),
+                                modifier = Modifier.fillMaxWidth().menuAnchor()
+                            )
+                            ExposedDropdownMenu(
+                                expanded = expandedStatusDropdown,
+                                onDismissRequest = { expandedStatusDropdown = false }
+                            ) {
+                                statuses.forEach { st ->
+                                    DropdownMenuItem(
+                                        text = { Text(st) },
+                                        onClick = {
+                                            status = st
+                                            expandedStatusDropdown = false
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                item {
+                    // Priority chips
+                    Column {
+                        Text(
+                            "Priorité :",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = TextSecondaryLight
+                        )
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            modifier = Modifier.padding(top = 4.dp)
+                        ) {
+                            priorities.forEach { p ->
+                                val isSelected = priority == p
+                                FilledTonalButton(
+                                    onClick = { priority = p },
+                                    colors = ButtonDefaults.filledTonalButtonColors(
+                                        containerColor = if (isSelected) VibrantBluePrimary else NeutralPillBg,
+                                        contentColor = if (isSelected) Color.White else NeutralPillText
+                                    ),
+                                    shape = RoundedCornerShape(100.dp),
+                                    modifier = Modifier.height(36.dp)
+                                ) {
+                                    Text(p, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                                }
+                            }
+                        }
+                    }
+                }
+
+                item {
+                    OutlinedTextField(
+                        value = desc,
+                        onValueChange = { desc = it },
+                        label = { Text("Détails / Instructions") },
+                        maxLines = 2,
+                        shape = RoundedCornerShape(14.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
+                item {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        OutlinedTextField(
+                            value = workQuantityStr,
+                            onValueChange = { workQuantityStr = it },
+                            label = { Text("Quantité totale") },
+                            singleLine = true,
+                            shape = RoundedCornerShape(14.dp),
+                            modifier = Modifier.weight(1f).testTag("input_edit_work_quantity")
+                        )
+                        ExposedDropdownMenuBox(
+                            expanded = expandedUnitDropdown,
+                            onExpandedChange = { expandedUnitDropdown = !expandedUnitDropdown },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            OutlinedTextField(
+                                value = workUnit,
+                                onValueChange = {},
+                                readOnly = true,
+                                label = { Text("Unité") },
+                                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedUnitDropdown) },
+                                shape = RoundedCornerShape(14.dp),
+                                modifier = Modifier.fillMaxWidth().menuAnchor()
+                            )
+                            ExposedDropdownMenu(
+                                expanded = expandedUnitDropdown,
+                                onDismissRequest = { expandedUnitDropdown = false }
+                            ) {
+                                units.forEach { u ->
+                                    DropdownMenuItem(
+                                        text = { Text(u) },
+                                        onClick = {
+                                            workUnit = u
+                                            expandedUnitDropdown = false
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                item {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        OutlinedTextField(
+                            value = rendementStr,
+                            onValueChange = { rendementStr = it },
+                            label = { Text("Rendement (qté/ouv/j)") },
+                            singleLine = true,
+                            shape = RoundedCornerShape(14.dp),
+                            modifier = Modifier.weight(1f).testTag("input_edit_rendement")
+                        )
+                        OutlinedTextField(
+                            value = completedQuantityStr,
+                            onValueChange = { completedQuantityStr = it },
+                            label = { Text("Réalisé à ce jour") },
+                            singleLine = true,
+                            shape = RoundedCornerShape(14.dp),
+                            modifier = Modifier.weight(1f).testTag("input_edit_completed_quantity")
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    if (title.isNotBlank() && selectedBlocId > 0) {
+                        val q = workQuantityStr.toDoubleOrNull() ?: 0.0
+                        val r = rendementStr.toDoubleOrNull() ?: 0.0
+                        val c = completedQuantityStr.toDoubleOrNull() ?: task.completedQuantity
+                        val percent = if (q > 0) ((c / q) * 100).toInt().coerceIn(0, 100) else task.completionPercent
+                        val finalStatus = if (percent >= 100 && status != "Terminé") "Terminé" else status
+
+                        onConfirm(
+                            task.copy(
+                                blocId = selectedBlocId,
+                                title = title.trim(),
+                                category = category.trim(),
+                                priority = priority,
+                                status = finalStatus,
+                                description = desc.trim(),
+                                workQuantity = q,
+                                completedQuantity = c,
+                                workUnit = workUnit,
+                                rendement = r,
+                                completionPercent = percent
+                            )
+                        )
+                    }
+                },
+                enabled = title.isNotBlank() && selectedBlocId > 0,
+                colors = ButtonDefaults.buttonColors(containerColor = VibrantBluePrimary),
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.testTag("btn_confirm_edit_task")
+            ) {
+                Text("Enregistrer Modifications", fontWeight = FontWeight.Bold)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Annuler", color = TextSecondaryLight)
             }
         }
     )
@@ -601,9 +995,9 @@ fun AddChefDialog(
         onDismissRequest = onDismiss,
         title = {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.Person, contentDescription = null, tint = AmberDark)
+                Icon(Icons.Default.Person, contentDescription = null, tint = VibrantBluePrimary)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Nouveau Chef d'Équipe", fontWeight = FontWeight.Bold)
+                Text("Nouveau Chef d'Équipe", fontWeight = FontWeight.Bold, color = TextPrimaryLight)
             }
         },
         text = {
@@ -613,6 +1007,7 @@ fun AddChefDialog(
                     onValueChange = { name = it },
                     label = { Text("Nom du Chef (ex: Chef Équipe 1 - Ahmed)") },
                     singleLine = true,
+                    shape = RoundedCornerShape(14.dp),
                     modifier = Modifier.fillMaxWidth().testTag("input_chef_name")
                 )
 
@@ -622,6 +1017,7 @@ fun AddChefDialog(
                     label = { Text("Nombre total d'ouvriers dans l'équipe") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     singleLine = true,
+                    shape = RoundedCornerShape(14.dp),
                     modifier = Modifier.fillMaxWidth().testTag("input_chef_workers")
                 )
 
@@ -635,6 +1031,7 @@ fun AddChefDialog(
                         readOnly = true,
                         label = { Text("Spécialité") },
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedSpecialty) },
+                        shape = RoundedCornerShape(14.dp),
                         modifier = Modifier.fillMaxWidth().menuAnchor()
                     )
                     ExposedDropdownMenu(
@@ -659,6 +1056,7 @@ fun AddChefDialog(
                     label = { Text("Téléphone (optionnel)") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                     singleLine = true,
+                    shape = RoundedCornerShape(14.dp),
                     modifier = Modifier.fillMaxWidth()
                 )
             }
@@ -672,16 +1070,18 @@ fun AddChefDialog(
                     }
                 },
                 enabled = name.isNotBlank() && (totalWorkersStr.toIntOrNull() ?: 0) > 0,
-                colors = ButtonDefaults.buttonColors(containerColor = AmberDark),
+                colors = ButtonDefaults.buttonColors(containerColor = VibrantBluePrimary),
+                shape = RoundedCornerShape(12.dp),
                 modifier = Modifier.testTag("btn_confirm_add_chef")
             ) {
-                Text("Enregistrer le Chef")
+                Text("Enregistrer le Chef", fontWeight = FontWeight.Bold)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Annuler")
+                Text("Annuler", color = TextSecondaryLight)
             }
         }
     )
 }
+

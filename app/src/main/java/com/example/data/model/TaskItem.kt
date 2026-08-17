@@ -28,5 +28,10 @@ data class TaskItem(
     val completionPercent: Int = 0, // 0 - 100
     val targetDate: String = "",
     val description: String = "",
+    val workQuantity: Double = 0.0, // Quantité totale
+    val completedQuantity: Double = 0.0, // Quantité réalisée
+    val workUnit: String = "", // Unité (ex: fonds, m2)
+    val rendement: Double = 0.0, // Rendement attendu par ouvrier/jour
+    val orderIndex: Int = 0, // Ordre d'affichage / déplacement dans le bloc
     val createdAt: Long = System.currentTimeMillis()
 )

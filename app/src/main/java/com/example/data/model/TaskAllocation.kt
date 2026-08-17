@@ -43,5 +43,8 @@ data class TaskAllocation(
     val taskId: Long,
     val workersCount: Int = 0,    // Nombre d'ouvriers affectés
     val note: String = "",
+    val customRendement: Double = 0.0, // Rendement ajusté spécifique pour cette équipe
+    val isSecondaryTask: Boolean = false, // Tâche combinée (évite le double comptage des mêmes ouvriers)
+    val linkedTaskId: Long? = null,
     val updatedAt: Long = System.currentTimeMillis()
 )
